@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPI IT Club - Shariatpur Polytechnic Institute</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandNavy: '#003366',
+                        brandGold: '#F5B012',
+                        brandTeal: '#00A896',
+                        brandDark: '#0A192F',
+                        brandBg: '#F4F7FB'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F4F7FB;
+        }
+        .glass-header {
+            background: rgba(0, 51, 102, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .gradient-banner {
+            background: linear-gradient(135deg, #003366 0%, #0A192F 70%, #00A896 100%);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #003366;
+            border-radius: 4px;
+        }
+        .drag-active {
+            border-color: #003366 !important;
+            background-color: #eff6ff !important;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex flex-col min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-40 glass-header text-white shadow-lg border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                
+                <!-- Logo & Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <div class="w-12 h-12 rounded-full border-2 border-brandGold bg-brandNavy flex items-center justify-center p-1 shadow-md">
+                            <div class="text-center">
+                                <i class="fa-solid fa-laptop-code text-brandGold text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="#" class="font-extrabold text-xl sm:text-2xl tracking-wide text-white flex items-center gap-2">
+                            SPI IT CLUB
+                        </a>
+                        <p class="text-xs text-brandGold font-medium tracking-wider">Shariatpur Polytechnic Institute</p>
+                    </div>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#notice" class="hover:text-brandGold font-medium transition duration-200">Notice Board</a>
+                    <a href="#courses" class="hover:text-brandGold font-medium transition duration-200">Courses</a>
+                    <a href="#gallery" class="hover:text-brandGold font-medium transition duration-200">Gallery</a>
+                    <a href="#founders" class="hover:text-brandGold font-medium transition duration-200">Founders</a>
+                    <a href="#committee" class="hover:text-brandGold font-medium transition duration-200">Committee</a>
+                    <a href="#fb-posts" class="hover:text-brandGold font-medium transition duration-200">Facebook Posts</a>
+                    <button onclick="openAdminModal()" class="bg-brandGold hover:bg-yellow-500 text-brandNavy font-bold px-4 py-2 rounded-xl text-sm transition shadow-md flex items-center gap-2">
+                        <i class="fa-solid fa-user-gear"></i> Admin Panel
+                    </button>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center gap-2">
+                    <button onclick="openAdminModal()" class="bg-brandGold text-brandNavy p-2 rounded-lg text-sm font-bold">
+                        <i class="fa-solid fa-user-gear"></i>
+                    </button>
+                    <button id="mobile-menu-btn" class="text-white hover:text-brandGold focus:outline-none p-2">
+                        <i class="fa-solid fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden bg-brandNavy border-t border-white/10 px-4 pt-3 pb-6 space-y-3">
+            <a href="#notice" class="block text-white hover:text-brandGold py-1 border-b border-white/5">Notice Board</a>
+            <a href="#courses" class="block text-white hover:text-brandGold py-1 border-b border-white/5">Courses</a>
+            <a href="#gallery" class="block text-white hover:text-brandGold py-1 border-b border-white/5">Gallery</a>
+            <a href="#founders" class="block text-white hover:text-brandGold py-1 border-b border-white/5">Founders</a>
+            <a href="#committee" class="block text-white hover:text-brandGold py-1 border-b border-white/5">Committee</a>
+            <a href="#fb-posts" class="block text-white hover:text-brandGold py-1">Facebook Posts</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="gradient-banner text-white py-16 px-4 relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-brandTeal/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="max-w-7xl mx-auto text-center relative z-10">
+            <span class="inline-block bg-white/10 backdrop-blur-md text-brandGold border border-brandGold/30 text-xs sm:text-sm px-4 py-1.5 rounded-full font-semibold mb-4">
+                Computer Department (Dept. CST) • Established 2025
+            </span>
+            <h1 class="text-3xl sm:text-5xl font-extrabold leading-tight mb-4 tracking-tight">
+                JOIN US TODAY & BE A PART OF SOMETHING EXTRAORDINARY!
+            </h1>
+            <p class="text-brandGold text-lg sm:text-2xl font-semibold mb-6 tracking-wide">
+                "Learn, Collaborate & Innovate"
+            </p>
+            <p class="text-slate-200 max-w-3xl mx-auto text-base sm:text-lg mb-8 leading-relaxed">
+                Established in 2025 by the Computer Department students of Shariatpur Polytechnic Institute. Joining the SPI IT Club is simple and affordable. Fill the joining form, submit it, and you are good to go!
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="https://www.facebook.com/SPIitClub01" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition flex items-center gap-2">
+                    <i class="fa-brands fa-facebook text-xl"></i> Visit Facebook Page
+                </a>
+                <a href="#courses" class="bg-brandGold hover:bg-yellow-500 text-brandNavy font-bold px-6 py-3 rounded-xl shadow-lg transition flex items-center gap-2">
+                    <i class="fa-solid fa-code"></i> Explore Courses
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Notice Board Section -->
+    <section id="notice" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 -mt-8 relative z-20">
+        <div class="bg-white rounded-2xl shadow-xl border-2 border-brandGold/40 p-6 sm:p-8">
+            <div class="flex items-center justify-between border-b pb-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center font-bold text-xl">
+                        <i class="fa-solid fa-bullhorn animate-pulse"></i>
+                    </div>
+                    <h2 class="text-2xl font-extrabold text-brandNavy">Notice Board</h2>
+                </div>
+                <span id="notice-count" class="text-xs bg-slate-100 text-slate-600 font-semibold px-3 py-1 rounded-full">Latest Updates</span>
+            </div>
+            
+            <div id="notice-container" class="space-y-4">
+                <!-- Dynamic Notices -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-16 flex-grow">
+
+        <!-- Section 1: Courses / Domains -->
+        <section id="courses" class="scroll-mt-24">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-extrabold text-brandNavy mb-2">Our Courses & Domains</h2>
+                <div class="w-20 h-1 bg-brandGold mx-auto rounded-full"></div>
+                <p class="text-slate-600 mt-2">Specialized tech training domains designed for CST students</p>
+            </div>
+
+            <div id="courses-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Dynamic Courses -->
+            </div>
+        </section>
+
+        <!-- Section 2: Photo Gallery Section -->
+        <section id="gallery" class="scroll-mt-24">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-extrabold text-brandNavy mb-2">Photo Gallery</h2>
+                <div class="w-20 h-1 bg-brandTeal mx-auto rounded-full"></div>
+                <p class="text-slate-600 mt-2">Highlights from workshops, seminars, and events</p>
+            </div>
+
+            <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamic Gallery Items Rendered Here -->
+            </div>
+        </section>
+
+        <!-- Section 3: Founder Panel -->
+        <section id="founders" class="scroll-mt-24">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-extrabold text-brandNavy mb-2">Founder Panel</h2>
+                <div class="w-20 h-1 bg-brandTeal mx-auto rounded-full"></div>
+                <p class="text-slate-600 mt-2">The visionaries who founded SPI IT Club in 2025</p>
+            </div>
+
+            <div id="founders-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-center">
+                <!-- Dynamic Founders -->
+            </div>
+        </section>
+
+        <!-- Section 4: Current Committee -->
+        <section id="committee" class="scroll-mt-24">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-extrabold text-brandNavy mb-2">Current Executive Committee</h2>
+                <div class="w-20 h-1 bg-brandGold mx-auto rounded-full"></div>
+                <p class="text-slate-600 mt-2">Dedicated student leaders steering the club forward</p>
+            </div>
+
+            <div id="committee-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Dynamic Committee members -->
+            </div>
+        </section>
+
+        <!-- Section 5: Facebook Posts Showcase -->
+        <section id="fb-posts" class="scroll-mt-24 bg-white rounded-2xl p-6 sm:p-8 shadow-md border border-slate-200">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 border-b pb-4">
+                <div>
+                    <h2 class="text-2xl font-extrabold text-brandNavy flex items-center gap-2">
+                        <i class="fa-brands fa-facebook text-blue-600"></i> Official Facebook Updates
+                    </h2>
+                    <p class="text-slate-600 text-sm">Recent news and activities directly from our Facebook page</p>
+                </div>
+                <a href="https://www.facebook.com/SPIitClub01" target="_blank" class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-semibold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2">
+                    Follow Page <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                </a>
+            </div>
+
+            <div id="fb-posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamic FB Posts -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Admin Panel Modal -->
+    <div id="adminModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative my-8 max-h-[90vh] overflow-y-auto">
+            <button onclick="closeAdminModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 text-2xl font-bold">
+                &times;
+            </button>
+
+            <!-- Login View -->
+            <div id="admin-login-view" class="space-y-4">
+                <div class="text-center mb-6">
+                    <div class="w-12 h-12 bg-brandNavy text-brandGold rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-brandNavy">Admin Portal Access</h3>
+                    <p class="text-xs text-slate-500">Enter passcode to manage website content</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Passcode</label>
+                    <input type="password" id="admin-pass-input" placeholder="Enter admin passcode..." class="w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brandNavy">
+                </div>
+                <p id="login-error" class="text-red-500 text-xs hidden">Incorrect passcode! Please try again.</p>
+                <button onclick="verifyAdminPass()" class="w-full bg-brandNavy text-white font-bold py-2.5 rounded-xl hover:bg-slate-800 transition">
+                    Unlock Dashboard
+                </button>
+            </div>
+
+            <!-- Dashboard View -->
+            <div id="admin-dashboard-view" class="hidden space-y-6">
+                <div class="flex items-center justify-between border-b pb-4">
+                    <h3 class="text-xl font-bold text-brandNavy"><i class="fa-solid fa-sliders text-brandGold me-2"></i>Content Management Dashboard</h3>
+                    <button onclick="logoutAdmin()" class="text-xs bg-red-100 text-red-600 font-bold px-3 py-1.5 rounded-lg hover:bg-red-200">Logout</button>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex border-b text-sm font-semibold gap-2 overflow-x-auto">
+                    <button onclick="switchAdminTab('notices')" class="tab-btn py-2 px-3 border-b-2 border-brandNavy text-brandNavy whitespace-nowrap" id="tab-notices">Notices</button>
+                    <button onclick="switchAdminTab('gallery')" class="tab-btn py-2 px-3 text-slate-500 whitespace-nowrap" id="tab-gallery">Gallery</button>
+                    <button onclick="switchAdminTab('committee')" class="tab-btn py-2 px-3 text-slate-500 whitespace-nowrap" id="tab-committee">Committee</button>
+                    <button onclick="switchAdminTab('posts')" class="tab-btn py-2 px-3 text-slate-500 whitespace-nowrap" id="tab-posts">FB Posts</button>
+                </div>
+
+                <!-- Form 1: Add/Edit Notice -->
+                <div id="admin-sec-notices" class="space-y-4">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <h4 id="notice-form-title" class="font-bold text-slate-700 mb-2">Publish New Notice</h4>
+                        <input type="hidden" id="edit-notice-id" value="">
+                        <div class="space-y-3">
+                            <input type="text" id="new-notice-title" placeholder="Notice Title" class="w-full border rounded-xl p-2.5 text-sm">
+                            <input type="text" id="new-notice-date" placeholder="Deadline / Date (e.g. 13th Feb, 5:00 PM)" class="w-full border rounded-xl p-2.5 text-sm">
+                            <textarea id="new-notice-body" placeholder="Detailed Notice Description..." class="w-full border rounded-xl p-2.5 text-sm h-20"></textarea>
+                            <div class="flex gap-2">
+                                <button onclick="saveNotice()" id="save-notice-btn" class="bg-brandNavy text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-800">
+                                    Post Notice
+                                </button>
+                                <button onclick="resetNoticeForm()" id="cancel-notice-btn" class="bg-slate-300 text-slate-700 px-4 py-2 rounded-xl font-bold text-sm hidden">
+                                    Cancel Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manage Existing Notices -->
+                    <div>
+                        <h4 class="font-bold text-slate-700 mb-2">Existing Notices</h4>
+                        <div id="admin-notice-list" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+
+                <!-- Form 2: Add/Edit Gallery Photo with Drag & Drop -->
+                <div id="admin-sec-gallery" class="space-y-4 hidden">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <h4 id="gallery-form-title" class="font-bold text-slate-700 mb-2">Add New Photo to Gallery</h4>
+                        <input type="hidden" id="edit-gallery-id" value="">
+                        <div class="space-y-3">
+                            <input type="text" id="new-img-title" placeholder="Photo Title / Event Name" class="w-full border rounded-xl p-2.5 text-sm">
+                            
+                            <!-- Drag and Drop Image Upload Box -->
+                            <div id="drop-zone" class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:border-brandNavy bg-white transition relative">
+                                <input type="file" id="image-file-input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                                <div id="drop-zone-prompt" class="space-y-1">
+                                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-brandTeal"></i>
+                                    <p class="text-xs font-semibold text-slate-700">Drag & Drop image here, or <span class="text-brandNavy underline">Browse</span></p>
+                                    <p class="text-[10px] text-slate-400">PNG, JPG, WEBP up to 2MB</p>
+                                </div>
+                                <div id="image-preview-container" class="hidden flex flex-col items-center gap-2">
+                                    <img id="image-preview" src="" alt="Preview" class="h-28 object-contain rounded border">
+                                    <span class="text-[11px] text-emerald-600 font-bold"><i class="fa-solid fa-circle-check"></i> Image selected!</span>
+                                </div>
+                            </div>
+
+                            <input type="text" id="new-img-url" placeholder="Or enter Image URL directly (e.g. https://...)" class="w-full border rounded-xl p-2.5 text-sm">
+                            <textarea id="new-img-desc" placeholder="Photo Description..." class="w-full border rounded-xl p-2.5 text-sm h-20"></textarea>
+                            <div class="flex gap-2">
+                                <button onclick="saveGalleryItem()" id="save-gallery-btn" class="bg-brandNavy text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-800">
+                                    Add to Gallery
+                                </button>
+                                <button onclick="resetGalleryForm()" id="cancel-gallery-btn" class="bg-slate-300 text-slate-700 px-4 py-2 rounded-xl font-bold text-sm hidden">
+                                    Cancel Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manage Existing Gallery Items -->
+                    <div>
+                        <h4 class="font-bold text-slate-700 mb-2">Existing Gallery Photos</h4>
+                        <div id="admin-gallery-list" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+
+                <!-- Form 3: Add/Edit Committee -->
+                <div id="admin-sec-committee" class="space-y-4 hidden">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <h4 id="committee-form-title" class="font-bold text-slate-700 mb-2">Add Member</h4>
+                        <input type="hidden" id="edit-member-id" value="">
+                        <div class="space-y-3">
+                            <input type="text" id="new-member-name" placeholder="Full Name" class="w-full border rounded-xl p-2.5 text-sm">
+                            <input type="text" id="new-member-role" placeholder="Designation (e.g., President / Secretary)" class="w-full border rounded-xl p-2.5 text-sm">
+                            <input type="text" id="new-member-session" placeholder="Session (e.g., Session 2021-22)" class="w-full border rounded-xl p-2.5 text-sm">
+                            <select id="new-member-type" class="w-full border rounded-xl p-2.5 text-sm">
+                                <option value="committee">Current Committee</option>
+                                <option value="founders">Founder Panel</option>
+                            </select>
+                            <div class="flex gap-2">
+                                <button onclick="saveCommitteeMember()" id="save-member-btn" class="bg-brandNavy text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-800">
+                                    Add Member
+                                </button>
+                                <button onclick="resetCommitteeForm()" id="cancel-member-btn" class="bg-slate-300 text-slate-700 px-4 py-2 rounded-xl font-bold text-sm hidden">
+                                    Cancel Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manage Existing Committee Members -->
+                    <div>
+                        <h4 class="font-bold text-slate-700 mb-2">Existing Members & Founders</h4>
+                        <div id="admin-committee-list" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+
+                <!-- Form 4: Add/Edit FB Post -->
+                <div id="admin-sec-posts" class="space-y-4 hidden">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <h4 id="post-form-title" class="font-bold text-slate-700 mb-2">Showcase Facebook Post</h4>
+                        <input type="hidden" id="edit-post-id" value="">
+                        <div class="space-y-3">
+                            <input type="text" id="new-post-title" placeholder="Post Title / Caption Header" class="w-full border rounded-xl p-2.5 text-sm">
+                            <input type="text" id="new-post-date" placeholder="Post Date (e.g., Feb 13, 2026)" class="w-full border rounded-xl p-2.5 text-sm">
+                            <input type="text" id="new-post-link" placeholder="Facebook Post URL" class="w-full border rounded-xl p-2.5 text-sm">
+                            <textarea id="new-post-snippet" placeholder="Post Excerpt / Brief..." class="w-full border rounded-xl p-2.5 text-sm h-20"></textarea>
+                            <div class="flex gap-2">
+                                <button onclick="saveFbPost()" id="save-post-btn" class="bg-brandNavy text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-slate-800">
+                                    Add FB Post
+                                </button>
+                                <button onclick="resetPostForm()" id="cancel-post-btn" class="bg-slate-300 text-slate-700 px-4 py-2 rounded-xl font-bold text-sm hidden">
+                                    Cancel Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manage Existing Facebook Posts -->
+                    <div>
+                        <h4 class="font-bold text-slate-700 mb-2">Existing Facebook Posts</h4>
+                        <div id="admin-posts-list" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-brandNavy text-white mt-auto border-t-4 border-brandGold">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <!-- Col 1: Brand -->
+                <div>
+                    <h3 class="text-xl font-bold text-brandGold mb-3">SPI IT CLUB</h3>
+                    <p class="text-slate-300 text-sm mb-4">
+                        The official tech community for Computer Science and Technology (CST) students at Shariatpur Polytechnic Institute.
+                    </p>
+                    <p class="text-xs text-brandGold italic font-semibold">"Learn, Collaborate & Innovate"</p>
+                </div>
+
+                <!-- Col 2: Contact Info -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-3">Location & Contact</h4>
+                    <ul class="text-slate-300 text-sm space-y-2">
+                        <li><i class="fa-solid fa-location-dot text-brandGold me-2"></i> Burir hat, Shariatpur Sadar, Shariatpur, 8000</li>
+                        <li><i class="fa-solid fa-building-columns text-brandGold me-2"></i> Computer Department (Dept. CST)</li>
+                        <li>
+                            <i class="fa-brands fa-facebook text-brandGold me-2"></i>
+                            <a href="https://www.facebook.com/SPIitClub01" target="_blank" class="hover:underline">
+                                facebook.com/SPIitClub01
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Developer Recognition -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-3">Developer Credits</h4>
+                    <div class="bg-white/10 p-4 rounded-xl border border-white/10">
+                        <p class="text-xs text-slate-300">Website Design & Engineering:</p>
+                        <p class="text-base font-bold text-brandGold mt-1">Sourov Saha</p>
+                        <p class="text-xs text-slate-200">Session: 2021-22</p>
+                        <p class="text-xs text-slate-400 mt-1">Computer Science and Technology (CST)</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="border-t border-white/10 mt-8 pt-6 text-center text-xs text-slate-400 flex flex-col sm:flex-row justify-between items-center gap-2">
+                <p>© 2025-2026 SPI IT Club. All Rights Reserved.</p>
+                <p>Crafted with <i class="fa-solid fa-heart text-red-500"></i> by Dept. of CST</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Permanent Storage Engine Integration (LocalStorage + IndexedDB + Server API) -->
+    <script>
+        const STORAGE_KEY = 'spi_it_club_data_v3';
+
+        // Load data from permanent storage
+        window.loadSavedData = function() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed.notices && Array.isArray(parsed.notices)) window.notices = parsed.notices;
+                    if (parsed.gallery && Array.isArray(parsed.gallery)) window.gallery = parsed.gallery;
+                    if (parsed.committee && Array.isArray(parsed.committee)) window.committee = parsed.committee;
+                    if (parsed.founders && Array.isArray(parsed.founders)) window.founders = parsed.founders;
+                    if (parsed.fbPosts && Array.isArray(parsed.fbPosts)) window.fbPosts = parsed.fbPosts;
+                    return true;
+                }
+            } catch (e) {
+                console.warn("Storage read error:", e);
+            }
+            return false;
+        };
+
+        // Save entire state permanently
+        window.persistAllData = function() {
+            const data = {
+                updatedAt: Date.now(),
+                notices: window.notices || [],
+                gallery: window.gallery || [],
+                committee: window.committee || [],
+                founders: window.founders || [],
+                fbPosts: window.fbPosts || []
+            };
+
+            // 1. LocalStorage for immediate persistence across refresh
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (e) {
+                console.warn("LocalStorage save warning:", e);
+            }
+
+            // 2. Server API sync if hosted
+            try {
+                fetch('/api/club-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                }).catch(() => {});
+            } catch (e) {}
+
+            window.showSaveNotification('Saved Permanently!');
+        };
+
+        // Floating toast feedback
+        window.showSaveNotification = function(msg) {
+            let toast = document.getElementById('save-toast-banner');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'save-toast-banner';
+                toast.className = 'fixed bottom-5 right-5 bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-xl shadow-2xl z-50 flex items-center gap-2 text-xs transition-opacity duration-300';
+                document.body.appendChild(toast);
+            }
+            toast.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + msg;
+            toast.style.opacity = '1';
+            toast.style.display = 'flex';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => { toast.style.display = 'none'; }, 300);
+            }, 2500);
+        };
+    </script>
+
+    <!-- UI & Logic Script -->
+    <script>
+        window.defaultNotices = [
+            {
+                id: "1",
+                title: "Membership Registration Form Submission Deadline!",
+                date: "13th Feb (Thursday), 5:00 PM",
+                body: "All interested CST students are requested to fill out the joining form and submit it before the deadline.",
+                isImportant: true
+            },
+            {
+                id: "2",
+                title: "Web Development & Python Workshop Announcement",
+                date: "Upcoming Workshop",
+                body: "A free hands-on 4-week programming bootcamp will begin soon for SPI IT Club registered members.",
+                isImportant: false
+            }
+        ];
+
+        window.defaultCourses = [
+            { title: "Web Development", icon: "fa-globe", desc: "Master modern HTML, CSS, JavaScript, and modern frontend frameworks." },
+            { title: "App Development", icon: "fa-mobile-screen-button", desc: "Build native and cross-platform mobile apps with practical hands-on projects." },
+            { title: "Cyber Security", icon: "fa-user-shield", desc: "Learn essential network defense techniques and cybersecurity foundations." },
+            { title: "Graphic Design", icon: "fa-palette", desc: "UI/UX principles, vector graphics, and professional branding design." },
+            { title: "Python Programming", icon: "fa-brands fa-python", desc: "Core logic building, data structures, and algorithmic problem-solving." },
+            { title: "Java Programming", icon: "fa-brands fa-java", desc: "Object-Oriented Programming (OOP) concepts and enterprise application basics." },
+            { title: "Video Editing", icon: "fa-film", desc: "Digital content creation, video rendering, and post-production skills." }
+        ];
+
+        window.defaultGallery = [
+            {
+                id: "1",
+                title: "Club Launch Ceremony 2025",
+                url: "https://placehold.co/600x400/003366/F5B012?text=SPI+IT+Club+Inauguration",
+                desc: "Official launching event of SPI IT Club with faculty members and CST students."
+            },
+            {
+                id: "2",
+                title: "Hands-on Programming Session",
+                url: "https://placehold.co/600x400/00A896/FFFFFF?text=Coding+Workshop",
+                desc: "Interactive coding workshop held at the computer lab for CST batch."
+            },
+            {
+                id: "3",
+                title: "Executive Panel Meeting",
+                url: "https://placehold.co/600x400/0A192F/F5B012?text=Executive+Team",
+                desc: "Strategic planning meeting for upcoming technical competitions."
+            }
+        ];
+
+        window.defaultFounders = [
+            { id: "101", name: "Founding Team CST", role: "Founder Panel", session: "Established 2025", icon: "fa-users-gear" },
+            { id: "102", name: "Computer Department", role: "Shariatpur Polytechnic Institute", session: "Dept. CST", icon: "fa-graduation-cap" }
+        ];
+
+        window.defaultCommittee = [
+            { id: "1", name: "Sourov Saha", role: "Website Lead & Executive Member", session: "Session 2021-22", dept: "CST" },
+            { id: "2", name: "Executive Member", role: "Club President", session: "Session 2021-22", dept: "CST" },
+            { id: "3", name: "Executive Member", role: "General Secretary", session: "Session 2021-22", dept: "CST" }
+        ];
+
+        window.defaultFbPosts = [
+            {
+                id: "1",
+                title: "SPI IT CLUB - Join Us Today!",
+                date: "13th Feb, 2025",
+                snippet: "Be a part of something extraordinary! Joining the SPI IT Club is simple and affordable. Submit your forms now.",
+                link: "https://www.facebook.com/SPIitClub01"
+            },
+            {
+                id: "2",
+                title: "Learn, Collaborate, Innovate",
+                date: "10th Feb, 2025",
+                snippet: "Elevate your tech skills with our upcoming series of peer-to-peer learning tracks.",
+                link: "https://www.facebook.com/SPIitClub01"
+            }
+        ];
+
+        // State variables
+        window.notices = window.defaultNotices;
+        window.gallery = window.defaultGallery;
+        window.committee = window.defaultCommittee;
+        window.founders = window.defaultFounders;
+        window.fbPosts = window.defaultFbPosts;
+        let selectedUploadedImageBase64 = "";
+
+        // Render Functions
+        window.renderNotices = function() {
+            const container = document.getElementById('notice-container');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            window.notices.forEach(n => {
+                const item = document.createElement('div');
+                item.className = `p-4 rounded-xl border-l-4 ${n.isImportant ? 'bg-amber-50 border-brandGold' : 'bg-slate-50 border-brandNavy'} flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 shadow-sm`;
+                item.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-slate-900 text-base sm:text-lg">${n.title}</h3>
+                            ${n.isImportant ? '<span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide">Urgent</span>' : ''}
+                        </div>
+                        <p class="text-slate-600 text-sm mt-1">${n.body}</p>
+                    </div>
+                    <span class="text-xs bg-white border font-semibold px-3 py-1.5 rounded-lg text-slate-600 whitespace-nowrap">
+                        <i class="fa-regular fa-clock me-1 text-brandNavy"></i> ${n.date}
+                    </span>
+                `;
+                container.appendChild(item);
+            });
+            renderAdminNoticeList();
+        };
+
+        window.renderCourses = function() {
+            const container = document.getElementById('courses-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            window.defaultCourses.forEach(c => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-6 rounded-2xl shadow-md border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition duration-300";
+                card.innerHTML = `
+                    <div class="w-12 h-12 bg-brandNavy/10 text-brandNavy rounded-xl flex items-center justify-center text-2xl mb-4">
+                        <i class="fa-solid ${c.icon}"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-brandNavy mb-2">${c.title}</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">${c.desc}</p>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        window.renderGallery = function() {
+            const container = document.getElementById('gallery-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            window.gallery.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl overflow-hidden shadow-md border border-slate-200 hover:shadow-xl transition duration-300 flex flex-col";
+                card.innerHTML = `
+                    <div class="h-48 overflow-hidden bg-slate-100 relative">
+                        <img src="${item.url}" alt="${item.title}" class="w-full h-full object-cover hover:scale-105 transition duration-500" onerror="this.src='https://placehold.co/600x400/003366/FFF?text=SPI+IT+Club'">
+                    </div>
+                    <div class="p-5 flex-grow flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-brandNavy text-lg mb-1">${item.title}</h3>
+                            <p class="text-slate-600 text-xs leading-relaxed">${item.desc}</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            renderAdminGalleryList();
+        };
+
+        window.renderFounders = function() {
+            const container = document.getElementById('founders-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            window.founders.forEach(f => {
+                const card = document.createElement('div');
+                card.className = "bg-gradient-to-br from-brandNavy to-slate-900 text-white p-6 rounded-2xl shadow-lg border border-brandGold/30 text-center";
+                card.innerHTML = `
+                    <div class="w-16 h-16 bg-brandGold/20 border-2 border-brandGold text-brandGold rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+                        <i class="fa-solid ${f.icon || 'fa-user-astronaut'}"></i>
+                    </div>
+                    <h3 class="font-bold text-xl text-white">${f.name}</h3>
+                    <p class="text-brandGold text-sm font-semibold mt-1">${f.role}</p>
+                    <span class="inline-block bg-white/10 text-xs px-3 py-1 rounded-full mt-3 text-slate-300">${f.session}</span>
+                `;
+                container.appendChild(card);
+            });
+        };
+
+        window.renderCommittee = function() {
+            const container = document.getElementById('committee-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            window.committee.forEach(m => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl shadow-md border border-slate-200 text-center hover:border-brandNavy transition";
+                card.innerHTML = `
+                    <div class="w-14 h-14 bg-slate-100 text-brandNavy rounded-full flex items-center justify-center text-xl mx-auto mb-3 border">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                    <h4 class="font-bold text-brandNavy text-base">${m.name}</h4>
+                    <p class="text-slate-600 text-xs font-semibold mt-0.5">${m.role}</p>
+                    <div class="mt-3 pt-2 border-t border-slate-100 flex justify-center items-center gap-2 text-[11px] text-slate-500">
+                        <span>${m.session}</span> • <span>${m.dept || 'CST'}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            renderAdminCommitteeList();
+        };
+
+        window.renderFbPosts = function() {
+            const container = document.getElementById('fb-posts-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            window.fbPosts.forEach(p => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 rounded-xl p-5 border border-slate-200 flex flex-col justify-between shadow-sm hover:shadow-md transition";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2 text-xs text-blue-600 font-bold mb-2">
+                            <i class="fa-brands fa-facebook"></i> SPI IT CLUB POST
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-base mb-2">${p.title}</h4>
+                        <p class="text-slate-600 text-xs line-clamp-3 mb-4">${p.snippet}</p>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-slate-200 pt-3 text-xs">
+                        <span class="text-slate-400">${p.date}</span>
+                        <a href="${p.link}" target="_blank" class="text-blue-600 font-bold hover:underline flex items-center gap-1">
+                            View Post <i class="fa-solid fa-external-link text-[10px]"></i>
+                        </a>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            renderAdminPostsList();
+        };
+
+        // --- Admin Item Lists Rendering & Actions ---
+        function renderAdminNoticeList() {
+            const container = document.getElementById('admin-notice-list');
+            if(!container) return;
+            container.innerHTML = '';
+            window.notices.forEach(n => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-2.5 bg-white rounded-lg border text-xs";
+                div.innerHTML = `
+                    <div class="truncate pr-2">
+                        <span class="font-bold text-slate-800">${n.title}</span>
+                        <span class="text-slate-400 text-[10px] block">${n.date}</span>
+                    </div>
+                    <div class="flex gap-1 shrink-0">
+                        <button onclick="editNotice('${n.id}')" class="px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-semibold"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteNotice('${n.id}')" class="px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 font-semibold"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderAdminGalleryList() {
+            const container = document.getElementById('admin-gallery-list');
+            if(!container) return;
+            container.innerHTML = '';
+            window.gallery.forEach(g => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-2.5 bg-white rounded-lg border text-xs";
+                div.innerHTML = `
+                    <div class="truncate pr-2">
+                        <span class="font-bold text-slate-800">${g.title}</span>
+                    </div>
+                    <div class="flex gap-1 shrink-0">
+                        <button onclick="editGallery('${g.id}')" class="px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-semibold"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteGallery('${g.id}')" class="px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 font-semibold"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderAdminCommitteeList() {
+            const container = document.getElementById('admin-committee-list');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            window.committee.forEach(m => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-2.5 bg-white rounded-lg border text-xs";
+                div.innerHTML = `
+                    <div class="truncate pr-2">
+                        <span class="font-bold text-slate-800">${m.name}</span> <span class="text-slate-400">(${m.role})</span>
+                    </div>
+                    <div class="flex gap-1 shrink-0">
+                        <button onclick="editCommittee('${m.id}', 'committee')" class="px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-semibold"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteCommittee('${m.id}', 'committee')" class="px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 font-semibold"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            window.founders.forEach(f => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-2.5 bg-amber-50/50 rounded-lg border border-amber-200 text-xs";
+                div.innerHTML = `
+                    <div class="truncate pr-2">
+                        <span class="font-bold text-amber-900">${f.name}</span> <span class="text-amber-700">(Founder)</span>
+                    </div>
+                    <div class="flex gap-1 shrink-0">
+                        <button onclick="editCommittee('${f.id}', 'founders')" class="px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-semibold"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteCommittee('${f.id}', 'founders')" class="px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 font-semibold"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderAdminPostsList() {
+            const container = document.getElementById('admin-posts-list');
+            if(!container) return;
+            container.innerHTML = '';
+            window.fbPosts.forEach(p => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-2.5 bg-white rounded-lg border text-xs";
+                div.innerHTML = `
+                    <div class="truncate pr-2">
+                        <span class="font-bold text-slate-800">${p.title}</span>
+                    </div>
+                    <div class="flex gap-1 shrink-0">
+                        <button onclick="editFbPost('${p.id}')" class="px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-semibold"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteFbPost('${p.id}')" class="px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 font-semibold"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Admin Modal Controls
+        function openAdminModal() {
+            document.getElementById('adminModal').classList.remove('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.add('hidden');
+        }
+
+        function verifyAdminPass() {
+            const pass = document.getElementById('admin-pass-input').value;
+            if(pass === '1125') {
+                document.getElementById('admin-login-view').classList.add('hidden');
+                document.getElementById('admin-dashboard-view').classList.remove('hidden');
+                document.getElementById('login-error').classList.add('hidden');
+                renderAdminNoticeList();
+                renderAdminGalleryList();
+                renderAdminCommitteeList();
+                renderAdminPostsList();
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        }
+
+        function logoutAdmin() {
+            document.getElementById('admin-login-view').classList.remove('hidden');
+            document.getElementById('admin-dashboard-view').classList.add('hidden');
+            document.getElementById('admin-pass-input').value = '';
+        }
+
+        function switchAdminTab(tab) {
+            document.getElementById('admin-sec-notices').classList.add('hidden');
+            document.getElementById('admin-sec-gallery').classList.add('hidden');
+            document.getElementById('admin-sec-committee').classList.add('hidden');
+            document.getElementById('admin-sec-posts').classList.add('hidden');
+
+            document.getElementById('tab-notices').className = "tab-btn py-2 px-3 text-slate-500 whitespace-nowrap";
+            document.getElementById('tab-gallery').className = "tab-btn py-2 px-3 text-slate-500 whitespace-nowrap";
+            document.getElementById('tab-committee').className = "tab-btn py-2 px-3 text-slate-500 whitespace-nowrap";
+            document.getElementById('tab-posts').className = "tab-btn py-2 px-3 text-slate-500 whitespace-nowrap";
+
+            if (tab === 'notices') {
+                document.getElementById('admin-sec-notices').classList.remove('hidden');
+                document.getElementById('tab-notices').className = "tab-btn py-2 px-3 border-b-2 border-brandNavy text-brandNavy font-bold whitespace-nowrap";
+            } else if (tab === 'gallery') {
+                document.getElementById('admin-sec-gallery').classList.remove('hidden');
+                document.getElementById('tab-gallery').className = "tab-btn py-2 px-3 border-b-2 border-brandNavy text-brandNavy font-bold whitespace-nowrap";
+            } else if (tab === 'committee') {
+                document.getElementById('admin-sec-committee').classList.remove('hidden');
+                document.getElementById('tab-committee').className = "tab-btn py-2 px-3 border-b-2 border-brandNavy text-brandNavy font-bold whitespace-nowrap";
+            } else if (tab === 'posts') {
+                document.getElementById('admin-sec-posts').classList.remove('hidden');
+                document.getElementById('tab-posts').className = "tab-btn py-2 px-3 border-b-2 border-brandNavy text-brandNavy font-bold whitespace-nowrap";
+            }
+        }
+
+        // --- Drag & Drop Image Logic ---
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('image-file-input');
+            const previewContainer = document.getElementById('image-preview-container');
+            const previewImg = document.getElementById('image-preview');
+            const prompt = document.getElementById('drop-zone-prompt');
+
+            if (!dropZone || !fileInput) return;
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.add('drag-active');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.remove('drag-active');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length) handleFile(files[0]);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) handleFile(e.target.files[0]);
+            });
+
+            function handleFile(file) {
+                if (!file.type.startsWith('image/')) return;
+                
+                // Compress and convert image to fit within Firestore limit
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const maxDim = 800; // Resizing large photos
+
+                        if (width > height) {
+                            if (width > maxDim) {
+                                height *= maxDim / width;
+                                width = maxDim;
+                            }
+                        } else {
+                            if (height > maxDim) {
+                                width *= maxDim / height;
+                                height = maxDim;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Compress quality to 0.7 for optimal size
+                        selectedUploadedImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                        previewImg.src = selectedUploadedImageBase64;
+                        prompt.classList.add('hidden');
+                        previewContainer.classList.remove('hidden');
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // --- Save / Edit / Delete Handlers (Permanent LocalStorage & Server Persistence) ---
+
+        // 1. Notice Handlers
+        function saveNotice() {
+            const editId = document.getElementById('edit-notice-id').value;
+            const title = document.getElementById('new-notice-title').value.trim();
+            const date = document.getElementById('new-notice-date').value.trim();
+            const body = document.getElementById('new-notice-body').value.trim();
+            if (!title || !body) return;
+
+            const noticeId = editId ? editId : String(Date.now());
+            const item = { id: noticeId, title, date: date || 'Recent', body, isImportant: true };
+
+            if (editId) {
+                window.notices = window.notices.map(n => String(n.id) === String(editId) ? item : n);
+            } else {
+                window.notices = [item, ...window.notices];
+            }
+
+            renderNotices();
+            persistAllData();
+            resetNoticeForm();
+        }
+
+        function editNotice(id) {
+            const item = window.notices.find(n => String(n.id) === String(id));
+            if (!item) return;
+            document.getElementById('edit-notice-id').value = item.id;
+            document.getElementById('new-notice-title').value = item.title;
+            document.getElementById('new-notice-date').value = item.date;
+            document.getElementById('new-notice-body').value = item.body;
+            document.getElementById('notice-form-title').innerText = "Edit Notice";
+            document.getElementById('save-notice-btn').innerText = "Update Notice";
+            document.getElementById('cancel-notice-btn').classList.remove('hidden');
+        }
+
+        function deleteNotice(id) {
+            window.notices = window.notices.filter(n => String(n.id) !== String(id));
+            renderNotices();
+            persistAllData();
+            resetNoticeForm();
+        }
+
+        function resetNoticeForm() {
+            document.getElementById('edit-notice-id').value = '';
+            document.getElementById('new-notice-title').value = '';
+            document.getElementById('new-notice-date').value = '';
+            document.getElementById('new-notice-body').value = '';
+            document.getElementById('notice-form-title').innerText = "Publish New Notice";
+            document.getElementById('save-notice-btn').innerText = "Post Notice";
+            document.getElementById('cancel-notice-btn').classList.add('hidden');
+        }
+
+        // 2. Gallery Handlers
+        function saveGalleryItem() {
+            const editId = document.getElementById('edit-gallery-id').value;
+            const title = document.getElementById('new-img-title').value.trim();
+            const urlInput = document.getElementById('new-img-url').value.trim();
+            const desc = document.getElementById('new-img-desc').value.trim();
+            if (!title) return;
+
+            const finalUrl = selectedUploadedImageBase64 || urlInput || 'https://placehold.co/600x400/003366/FFF?text=SPI+IT+Club';
+            const galleryId = editId ? editId : String(Date.now());
+            const item = { id: galleryId, title, url: finalUrl, desc: desc || 'Event photo.' };
+
+            if (editId) {
+                window.gallery = window.gallery.map(g => String(g.id) === String(editId) ? item : g);
+            } else {
+                window.gallery = [item, ...window.gallery];
+            }
+
+            renderGallery();
+            persistAllData();
+            resetGalleryForm();
+        }
+
+        function editGallery(id) {
+            const item = window.gallery.find(g => String(g.id) === String(id));
+            if (!item) return;
+            document.getElementById('edit-gallery-id').value = item.id;
+            document.getElementById('new-img-title').value = item.title;
+            document.getElementById('new-img-url').value = item.url;
+            document.getElementById('new-img-desc').value = item.desc;
+            document.getElementById('gallery-form-title').innerText = "Edit Gallery Photo";
+            document.getElementById('save-gallery-btn').innerText = "Update Photo";
+            document.getElementById('cancel-gallery-btn').classList.remove('hidden');
+        }
+
+        function deleteGallery(id) {
+            window.gallery = window.gallery.filter(g => String(g.id) !== String(id));
+            renderGallery();
+            persistAllData();
+            resetGalleryForm();
+        }
+
+        function resetGalleryForm() {
+            document.getElementById('edit-gallery-id').value = '';
+            document.getElementById('new-img-title').value = '';
+            document.getElementById('new-img-url').value = '';
+            document.getElementById('new-img-desc').value = '';
+            selectedUploadedImageBase64 = "";
+            document.getElementById('image-preview-container').classList.add('hidden');
+            document.getElementById('drop-zone-prompt').classList.remove('hidden');
+            document.getElementById('gallery-form-title').innerText = "Add New Photo to Gallery";
+            document.getElementById('save-gallery-btn').innerText = "Add to Gallery";
+            document.getElementById('cancel-gallery-btn').classList.add('hidden');
+        }
+
+        // 3. Committee Handlers
+        function saveCommitteeMember() {
+            const editId = document.getElementById('edit-member-id').value;
+            const name = document.getElementById('new-member-name').value.trim();
+            const role = document.getElementById('new-member-role').value.trim();
+            const session = document.getElementById('new-member-session').value.trim();
+            const type = document.getElementById('new-member-type').value;
+
+            if (!name || !role) return;
+
+            const memberId = editId ? editId : String(Date.now());
+            const member = { id: memberId, name, role, session: session || (type === 'founders' ? 'Established 2025' : 'Session 2021-22'), dept: 'CST' };
+
+            const colName = type === 'founders' ? 'founders' : 'committee';
+            if (type === 'founders') {
+                if (editId) {
+                    window.founders = window.founders.map(f => String(f.id) === String(editId) ? member : f);
+                } else {
+                    window.founders = [...window.founders, member];
+                }
+                renderFounders();
+            } else {
+                if (editId) {
+                    window.committee = window.committee.map(c => String(c.id) === String(editId) ? member : c);
+                } else {
+                    window.committee = [...window.committee, member];
+                }
+                renderCommittee();
+            }
+
+            persistAllData();
+            resetCommitteeForm();
+        }
+
+        function editCommittee(id, type) {
+            const list = type === 'founders' ? window.founders : window.committee;
+            const item = list.find(m => String(m.id) === String(id));
+            if (!item) return;
+
+            document.getElementById('edit-member-id').value = item.id;
+            document.getElementById('new-member-name').value = item.name;
+            document.getElementById('new-member-role').value = item.role;
+            document.getElementById('new-member-session').value = item.session;
+            document.getElementById('new-member-type').value = type;
+            document.getElementById('committee-form-title').innerText = "Edit Member";
+            document.getElementById('save-member-btn').innerText = "Update Member";
+            document.getElementById('cancel-member-btn').classList.remove('hidden');
+        }
+
+        function deleteCommittee(id, type) {
+            if (type === 'founders') {
+                window.founders = window.founders.filter(f => String(f.id) !== String(id));
+                renderFounders();
+            } else {
+                window.committee = window.committee.filter(c => String(c.id) !== String(id));
+                renderCommittee();
+            }
+            persistAllData();
+            resetCommitteeForm();
+        }
+
+        function resetCommitteeForm() {
+            document.getElementById('edit-member-id').value = '';
+            document.getElementById('new-member-name').value = '';
+            document.getElementById('new-member-role').value = '';
+            document.getElementById('new-member-session').value = '';
+            document.getElementById('committee-form-title').innerText = "Add Member";
+            document.getElementById('save-member-btn').innerText = "Add Member";
+            document.getElementById('cancel-member-btn').classList.add('hidden');
+        }
+
+        // 4. FB Post Handlers
+        function saveFbPost() {
+            const editId = document.getElementById('edit-post-id').value;
+            const title = document.getElementById('new-post-title').value.trim();
+            const date = document.getElementById('new-post-date').value.trim();
+            const link = document.getElementById('new-post-link').value.trim();
+            const snippet = document.getElementById('new-post-snippet').value.trim();
+
+            if (!title || !snippet) return;
+
+            const postId = editId ? editId : String(Date.now());
+            const item = { id: postId, title, date: date || 'Recent', snippet, link: link || 'https://www.facebook.com/SPIitClub01' };
+
+            if (editId) {
+                window.fbPosts = window.fbPosts.map(p => String(p.id) === String(editId) ? item : p);
+            } else {
+                window.fbPosts = [item, ...window.fbPosts];
+            }
+
+            renderFbPosts();
+            persistAllData();
+            resetPostForm();
+        }
+
+        function editFbPost(id) {
+            const item = window.fbPosts.find(p => String(p.id) === String(id));
+            if (!item) return;
+
+            document.getElementById('edit-post-id').value = item.id;
+            document.getElementById('new-post-title').value = item.title;
+            document.getElementById('new-post-date').value = item.date;
+            document.getElementById('new-post-link').value = item.link;
+            document.getElementById('new-post-snippet').value = item.snippet;
+            document.getElementById('post-form-title').innerText = "Edit Facebook Post";
+            document.getElementById('save-post-btn').innerText = "Update Post";
+            document.getElementById('cancel-post-btn').classList.remove('hidden');
+        }
+
+        function deleteFbPost(id) {
+            window.fbPosts = window.fbPosts.filter(p => String(p.id) !== String(id));
+            renderFbPosts();
+            persistAllData();
+            resetPostForm();
+        }
+
+        function resetPostForm() {
+            document.getElementById('edit-post-id').value = '';
+            document.getElementById('new-post-title').value = '';
+            document.getElementById('new-post-date').value = '';
+            document.getElementById('new-post-link').value = '';
+            document.getElementById('new-post-snippet').value = '';
+            document.getElementById('post-form-title').innerText = "Showcase Facebook Post";
+            document.getElementById('save-post-btn').innerText = "Add FB Post";
+            document.getElementById('cancel-post-btn').classList.add('hidden');
+        }
+
+        // Mobile Menu Toggle
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Initial Load
+        window.onload = function() {
+            loadSavedData();
+            renderNotices();
+            renderCourses();
+            renderGallery();
+            renderFounders();
+            renderCommittee();
+            renderFbPosts();
+            setupDragAndDrop();
+        };
+    </script>
+</body>
+</html>

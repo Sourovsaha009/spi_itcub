@@ -1,0 +1,159 @@
+{
+  "notices": [
+    {
+      "id": "1",
+      "title": "Membership Registration Form Submission Deadline!",
+      "date": "13th Feb (Thursday), 5:00 PM",
+      "body": "All interested CST students are requested to fill out the joining form and submit it before the deadline.",
+      "isImportant": true,
+      "category": "Registration"
+    },
+    {
+      "id": "2",
+      "title": "Web Development & Python Workshop Announcement",
+      "date": "Upcoming Workshop",
+      "body": "A free hands-on 4-week programming bootcamp will begin soon for SPI IT Club registered members.",
+      "isImportant": false,
+      "category": "Workshop"
+    }
+  ],
+  "courses": [
+    {
+      "id": "c1",
+      "title": "Web Development",
+      "icon": "fa-globe",
+      "desc": "Master modern HTML, CSS, JavaScript, React, and modern frontend frameworks.",
+      "duration": "8 Weeks"
+    },
+    {
+      "id": "c2",
+      "title": "App Development",
+      "icon": "fa-mobile-screen-button",
+      "desc": "Build native and cross-platform mobile apps with practical hands-on projects.",
+      "duration": "6 Weeks"
+    },
+    {
+      "id": "c3",
+      "title": "Cyber Security",
+      "icon": "fa-user-shield",
+      "desc": "Learn essential network defense techniques, ethical hacking, and cybersecurity foundations.",
+      "duration": "6 Weeks"
+    },
+    {
+      "id": "c4",
+      "title": "Graphic Design",
+      "icon": "fa-palette",
+      "desc": "UI/UX principles, vector graphics, Figma, and professional branding design.",
+      "duration": "4 Weeks"
+    },
+    {
+      "id": "c5",
+      "title": "Python Programming",
+      "icon": "fa-brands fa-python",
+      "desc": "Core logic building, data structures, algorithms, and automated scripting.",
+      "duration": "6 Weeks"
+    },
+    {
+      "id": "c6",
+      "title": "Java Programming",
+      "icon": "fa-brands fa-java",
+      "desc": "Object-Oriented Programming (OOP) concepts and enterprise application basics.",
+      "duration": "6 Weeks"
+    },
+    {
+      "id": "c7",
+      "title": "Video Editing",
+      "icon": "fa-film",
+      "desc": "Digital content creation, premiere video rendering, and post-production skills.",
+      "duration": "4 Weeks"
+    }
+  ],
+  "gallery": [
+    {
+      "id": "1",
+      "title": "Club Launch Ceremony 2025",
+      "url": "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80",
+      "desc": "Official launching event of SPI IT Club with faculty members and CST students.",
+      "date": "Feb 2025"
+    },
+    {
+      "id": "2",
+      "title": "Hands-on Programming Session",
+      "url": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
+      "desc": "Interactive coding workshop held at the computer lab for CST batch.",
+      "date": "Feb 2025"
+    },
+    {
+      "id": "3",
+      "title": "Executive Panel Meeting",
+      "url": "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80",
+      "desc": "Strategic planning meeting for upcoming technical competitions and bootcamps.",
+      "date": "Jan 2025"
+    }
+  ],
+  "founders": [
+    {
+      "id": "101",
+      "name": "Founding Team CST",
+      "role": "Founder Panel",
+      "session": "Established 2025",
+      "dept": "CST",
+      "icon": "fa-users-gear"
+    },
+    {
+      "id": "102",
+      "name": "Computer Department",
+      "role": "Shariatpur Polytechnic Institute",
+      "session": "Dept. CST",
+      "dept": "CST",
+      "icon": "fa-graduation-cap"
+    }
+  ],
+  "committee": [
+    {
+      "id": "1",
+      "name": "Sourov Saha",
+      "role": "Website Lead & Executive Member",
+      "session": "Session 2021-22",
+      "dept": "CST"
+    },
+    {
+      "id": "2",
+      "name": "Executive Member",
+      "role": "Club President",
+      "session": "Session 2021-22",
+      "dept": "CST"
+    },
+    {
+      "id": "3",
+      "name": "Executive Member",
+      "role": "General Secretary",
+      "session": "Session 2021-22",
+      "dept": "CST"
+    }
+  ],
+  "fbPosts": [
+    {
+      "id": "1",
+      "title": "SPI IT CLUB - Join Us Today!",
+      "date": "13th Feb, 2025",
+      "snippet": "Be a part of something extraordinary! Joining the SPI IT Club is simple and affordable. Submit your forms now.",
+      "link": "https://www.facebook.com/SPIitClub01"
+    },
+    {
+      "id": "2",
+      "title": "Learn, Collaborate, Innovate",
+      "date": "10th Feb, 2025",
+      "snippet": "Elevate your tech skills with our upcoming series of peer-to-peer learning tracks.",
+      "link": "https://www.facebook.com/SPIitClub01"
+    }
+  ],
+  "applications": [],
+  "settings": {
+    "passcode": "1125",
+    "clubName": "SPI IT CLUB",
+    "instituteName": "Shariatpur Polytechnic Institute",
+    "facebookUrl": "https://www.facebook.com/SPIitClub01",
+    "department": "Computer Department (Dept. CST)"
+  }
+}
