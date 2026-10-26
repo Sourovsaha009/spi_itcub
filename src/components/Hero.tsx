@@ -15,6 +15,25 @@ export const Hero: React.FC<HeroProps> = ({ onOpenJoin, facebookUrl = "https://w
 
       <div className="max-w-5xl mx-auto text-center relative z-10">
         
+        {/* Official SPI IT Club Emblem Badge */}
+        <div className="flex justify-center mb-6">
+          <div className="relative group">
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-[#F5B012] shadow-2xl overflow-hidden bg-white p-1 group-hover:scale-105 transition-transform duration-300">
+              <img
+                src="./assets/aistudio/477647138_122109653414726359_696_b5f4c3a5.jpg"
+                alt="SPI IT Club Official Emblem"
+                className="w-full h-full object-contain rounded-full"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/logo.jpg';
+                }}
+              />
+            </div>
+            <span className="absolute -bottom-1 right-2 bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full border border-white shadow">
+              DEPT-CST
+            </span>
+          </div>
+        </div>
+
         {/* CST Department Tag */}
         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md text-[#F5B012] border border-[#F5B012]/30 text-xs sm:text-sm px-4 py-1.5 rounded-full font-semibold mb-6 shadow-inner animate-pulse">
           <Sparkles className="w-3.5 h-3.5" />
@@ -31,10 +50,9 @@ export const Hero: React.FC<HeroProps> = ({ onOpenJoin, facebookUrl = "https://w
           &ldquo;Learn, Collaborate &amp; Innovate&rdquo;
         </p>
 
-        {/* Description */}
+        {/* Description requested by user */}
         <p className="text-slate-200 max-w-3xl mx-auto text-base sm:text-lg mb-8 leading-relaxed font-normal">
-          Established in 2025 by passionate Computer Department students of Shariatpur Polytechnic Institute.
-          Joining the SPI IT Club empowers you with industrial tech skills, collaborative bootcamps, and a vibrant community. Fill the form to get started!
+          Established in 2025 by passionate Computer Department students of Shariatpur Polytechnic Institute. Joining the SPI IT Club empowers you with programming, networking and communicating skills.
         </p>
 
         {/* Action Buttons */}

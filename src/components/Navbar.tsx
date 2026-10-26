@@ -26,9 +26,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAdmin, onOpenJoin }) => {
           {/* Logo & Title */}
           <a href="#" className="flex items-center space-x-3 group">
             <div className="relative">
-              <div className="w-12 h-12 rounded-full border-2 border-[#F5B012] bg-[#003366] flex items-center justify-center p-1 shadow-md group-hover:scale-105 transition-transform duration-300">
-                <Laptop className="w-6 h-6 text-[#F5B012]" />
-              </div>
+              <img
+                src="./assets/aistudio/477647138_122109653414726359_696_b5f4c3a5.jpg"
+                alt="SPI IT Club Official Logo"
+                className="w-13 h-13 rounded-full border-2 border-[#F5B012] object-contain bg-white shadow-md group-hover:scale-105 transition-transform duration-300"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/logo.jpg';
+                }}
+              />
               <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-[#003366] rounded-full" title="Online & Active"></span>
             </div>
             <div>

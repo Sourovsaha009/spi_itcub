@@ -18,10 +18,20 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 1: Club Brand Info */}
           <div>
             <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 rounded-full border border-[#F5B012] bg-[#0A192F] flex items-center justify-center p-1 shadow">
-                <Laptop className="w-5 h-5 text-[#F5B012]" />
+              <div className="w-12 h-12 rounded-full border-2 border-[#F5B012] bg-white flex items-center justify-center p-0.5 shadow overflow-hidden">
+                <img
+                  src="./assets/aistudio/477647138_122109653414726359_696_b5f4c3a5.jpg"
+                  alt="SPI IT Club Logo"
+                  className="w-full h-full object-contain rounded-full"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/logo.jpg';
+                  }}
+                />
               </div>
-              <h3 className="text-xl font-black text-[#F5B012] tracking-wide">SPI IT CLUB</h3>
+              <div>
+                <h3 className="text-xl font-black text-[#F5B012] tracking-wide">SPI IT CLUB</h3>
+                <p className="text-[10px] text-slate-300 font-medium">Shariatpur Polytechnic Institute</p>
+              </div>
             </div>
             <p className="text-slate-300 text-sm mb-4 leading-relaxed">
               The official technology community for Computer Science and Technology (CST) students at Shariatpur Polytechnic Institute.

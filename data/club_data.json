@@ -66,6 +66,20 @@
       "icon": "fa-film",
       "desc": "Digital content creation, premiere video rendering, and post-production skills.",
       "duration": "4 Weeks"
+    },
+    {
+      "id": "c8",
+      "title": "Data Science & Python",
+      "icon": "fa-chart-pie",
+      "desc": "Data analysis, Pandas, NumPy, visualization, and Python-driven machine learning concepts.",
+      "duration": "8 Weeks"
+    },
+    {
+      "id": "c9",
+      "title": "Basic Computer & Hardware",
+      "icon": "fa-microchip",
+      "desc": "PC assembling, operating system setup, BIOS configuration, hardware troubleshooting, and IT essentials.",
+      "duration": "4 Weeks"
     }
   ],
   "gallery": [

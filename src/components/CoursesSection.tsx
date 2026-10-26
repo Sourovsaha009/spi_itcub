@@ -34,7 +34,7 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ courses, onOpenJ
 
             <div>
               <div className="w-14 h-14 bg-[#003366]/10 text-[#003366] rounded-2xl flex items-center justify-center text-2xl mb-5 group-hover:bg-[#003366] group-hover:text-[#F5B012] transition-colors duration-300 shadow-xs">
-                <i className={`fa-solid ${course.icon} text-2xl`}></i>
+                <i className={`${course.icon.includes('fa-brands') || course.icon.includes('fa-solid') ? course.icon : `fa-solid ${course.icon}`} text-2xl`}></i>
               </div>
 
               <div className="flex items-center justify-between mb-2">

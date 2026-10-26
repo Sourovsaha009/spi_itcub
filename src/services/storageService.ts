@@ -28,7 +28,9 @@ export const defaultClubData: ClubData = {
     { id: "c4", title: "Graphic Design", icon: "fa-palette", desc: "UI/UX principles, vector graphics, Figma, and professional branding design.", duration: "4 Weeks" },
     { id: "c5", title: "Python Programming", icon: "fa-brands fa-python", desc: "Core logic building, data structures, algorithms, and automated scripting.", duration: "6 Weeks" },
     { id: "c6", title: "Java Programming", icon: "fa-brands fa-java", desc: "Object-Oriented Programming (OOP) concepts and enterprise application basics.", duration: "6 Weeks" },
-    { id: "c7", title: "Video Editing", icon: "fa-film", desc: "Digital content creation, premiere video rendering, and post-production skills.", duration: "4 Weeks" }
+    { id: "c7", title: "Video Editing", icon: "fa-film", desc: "Digital content creation, premiere video rendering, and post-production skills.", duration: "4 Weeks" },
+    { id: "c8", title: "Data Science & Python", icon: "fa-chart-pie", desc: "Data analysis, Pandas, NumPy, visualization, and Python-driven machine learning concepts.", duration: "8 Weeks" },
+    { id: "c9", title: "Basic Computer & Hardware", icon: "fa-microchip", desc: "PC assembling, operating system setup, BIOS configuration, hardware troubleshooting, and IT essentials.", duration: "4 Weeks" }
   ],
   gallery: [
     {
@@ -184,15 +186,28 @@ export async function loadClubData(): Promise<ClubData> {
     console.info('Server API unreachable, using local persistent database:', err);
   }
 
-  if (localCandidate && localCandidate !== defaultClubData) {
-    return localCandidate;
-  }
+  const finalResult = localCandidate && localCandidate !== defaultClubData
+    ? ensureDefaults(localCandidate)
+    : defaultClubData;
 
-  // First time initialization
-  await writeToIndexedDB(defaultClubData);
-  safeSetLocalStorage(defaultClubData);
-  saveToFirestore(defaultClubData).catch(() => {});
-  return defaultClubData;
+  // Sync to stores
+  await writeToIndexedDB(finalResult);
+  safeSetLocalStorage(finalResult);
+  return finalResult;
+}
+
+function ensureDefaults(data: ClubData): ClubData {
+  if (!data) return defaultClubData;
+  const existingCourseTitles = new Set((data.courses || []).map(c => c.title.toLowerCase().trim()));
+  const missingCourses = defaultClubData.courses.filter(c => !existingCourseTitles.has(c.title.toLowerCase().trim()));
+  
+  if (missingCourses.length > 0) {
+    return {
+      ...data,
+      courses: [...(data.courses || []), ...missingCourses]
+    };
+  }
+  return data;
 }
 
 // Save data to all stores: Cloud Firestore + IndexedDB + LocalStorage + Server Disk API

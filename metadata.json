@@ -1,6 +1,6 @@
 {
   "name": "SPI IT Club - Shariatpur Polytechnic Institute",
-  "description": "Official website and admin management portal for SPI IT Club, Computer Department (CST), Shariatpur Polytechnic Institute.",
+  "description": "Established in 2025 by passionate Computer Department students of Shariatpur Polytechnic Institute. Joining the SPI IT Club empowers you with programming, networking and communicating skills.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
