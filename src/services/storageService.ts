@@ -137,7 +137,8 @@ export async function loadClubData(): Promise<ClubData> {
   // 3. Try to sync with Server Disk API (/api/club-data)
   try {
     const res = await fetch('/api/club-data', { cache: 'no-store' });
-    if (res.ok) {
+    const contentType = res.headers.get('content-type');
+    if (res.ok && contentType && contentType.includes('application/json')) {
       const serverData = await res.json();
       if (serverData && Array.isArray(serverData.notices)) {
         const serverTime = serverData.updatedAt || 0;
