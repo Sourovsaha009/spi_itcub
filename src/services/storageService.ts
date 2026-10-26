@@ -113,7 +113,9 @@ export function getInitialSyncCache(): ClubData {
   return defaultClubData;
 }
 
-// Load data from multi-tier stores: IndexedDB -> LocalStorage -> Server API
+import { loadFromFirestore, saveToFirestore } from './firebase';
+
+// Load data from multi-tier stores: Firebase Firestore (Cloud) -> IndexedDB -> LocalStorage -> Server API
 export async function loadClubData(): Promise<ClubData> {
   let localCandidate: ClubData | null = null;
 
@@ -134,7 +136,26 @@ export async function loadClubData(): Promise<ClubData> {
 
   const localTime = localCandidate?.updatedAt || 0;
 
-  // 3. Try to sync with Server Disk API (/api/club-data)
+  // 3. Try to sync with Cloud Firestore (Universal Cloud Database)
+  try {
+    const cloudData = await loadFromFirestore();
+    if (cloudData && Array.isArray(cloudData.notices)) {
+      const cloudTime = cloudData.updatedAt || 0;
+      if (cloudTime >= localTime) {
+        await writeToIndexedDB(cloudData);
+        safeSetLocalStorage(cloudData);
+        return cloudData;
+      } else if (localCandidate) {
+        // Push newer local edits to cloud
+        saveToFirestore(localCandidate).catch(() => {});
+        return localCandidate;
+      }
+    }
+  } catch (err) {
+    console.info('Cloud Firestore not reachable yet, using local store:', err);
+  }
+
+  // 4. Try to sync with Server Disk API (/api/club-data)
   try {
     const res = await fetch('/api/club-data', { cache: 'no-store' });
     const contentType = res.headers.get('content-type');
@@ -143,14 +164,11 @@ export async function loadClubData(): Promise<ClubData> {
       if (serverData && Array.isArray(serverData.notices)) {
         const serverTime = serverData.updatedAt || 0;
 
-        // CRITICAL: Only accept serverData if it is NEWER than local candidate!
-        // If localCandidate has user edits (newer timestamp), keep local and update server!
         if (serverTime > localTime) {
           await writeToIndexedDB(serverData);
           safeSetLocalStorage(serverData);
           return serverData;
         } else if (localTime > serverTime && localCandidate) {
-          // Push newer local edits to server in background
           fetch('/api/club-data', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -173,41 +191,42 @@ export async function loadClubData(): Promise<ClubData> {
   // First time initialization
   await writeToIndexedDB(defaultClubData);
   safeSetLocalStorage(defaultClubData);
+  saveToFirestore(defaultClubData).catch(() => {});
   return defaultClubData;
 }
 
-// Save data to all stores: IndexedDB + LocalStorage + Server Disk API
+// Save data to all stores: Cloud Firestore + IndexedDB + LocalStorage + Server Disk API
 export async function persistClubData(newData: ClubData): Promise<boolean> {
   const stampedData: ClubData = {
     ...newData,
     updatedAt: Date.now()
   };
 
-  // 1. Write to IndexedDB (reliable, stores large base64 images without quota limits)
+  // 1. Write to Cloud Firestore (Universal cloud persistence across all users and devices)
+  const cloudPromise = saveToFirestore(stampedData);
+
+  // 2. Write to IndexedDB (reliable local database, handles large images without quota limits)
   const idbOk = await writeToIndexedDB(stampedData);
 
-  // 2. Write to LocalStorage (fast synchronous reload cache)
+  // 3. Write to LocalStorage (fast synchronous reload cache)
   safeSetLocalStorage(stampedData);
 
-  // 3. Push to Server API for cross-device persistence
-  let serverOk = false;
+  // 4. Push to Server API if hosted on Node/Express
   try {
-    const res = await fetch('/api/club-data', {
+    fetch('/api/club-data', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(stampedData)
-    });
-    serverOk = res.ok;
-  } catch (err) {
-    console.warn('Could not push to server disk, saved in browser database:', err);
-  }
+    }).catch(() => {});
+  } catch (err) {}
 
   // Dispatch global window event so any open component/tab updates immediately
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('spi_club_data_changed', { detail: stampedData }));
   }
 
-  return idbOk || serverOk;
+  const cloudOk = await cloudPromise;
+  return cloudOk || idbOk;
 }
 
 // Reset data to defaults

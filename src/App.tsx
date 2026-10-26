@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ClubData, GalleryItem, ApplicationItem } from './types';
 import { defaultClubData, loadClubData, persistClubData, getInitialSyncCache } from './services/storageService';
+import { subscribeToFirestore } from './services/firebase';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { NoticeBoard } from './components/NoticeBoard';
@@ -45,8 +46,17 @@ export default function App() {
       }
     };
     window.addEventListener('spi_club_data_changed', handleStorageUpdate);
+
+    // Live cloud listener: real-time updates when any admin updates data
+    const unsubscribeCloud = subscribeToFirestore((cloudData) => {
+      if (cloudData && Array.isArray(cloudData.notices)) {
+        setClubData(cloudData);
+      }
+    });
+
     return () => {
       window.removeEventListener('spi_club_data_changed', handleStorageUpdate);
+      unsubscribeCloud();
     };
   }, []);
 
