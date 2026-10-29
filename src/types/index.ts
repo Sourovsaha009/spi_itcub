@@ -19,6 +19,7 @@ export interface GalleryItem {
   id: string;
   title: string;
   url: string;
+  images?: string[];
   desc: string;
   date?: string;
 }

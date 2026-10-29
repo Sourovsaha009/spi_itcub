@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
   X, Lock, Unlock, Save, Trash2, Edit3, Image as ImageIcon,
   UploadCloud, CheckCircle2, AlertTriangle, Download, RefreshCw,
-  Users, Megaphone, Facebook, FileText, KeyRound, Check, Plus
+  Users, Megaphone, Facebook, FileText, KeyRound, Check, Plus, Star, Layers
 } from 'lucide-react';
 import { ClubData, NoticeItem, GalleryItem, CommitteeMember, FounderItem, FbPostItem, ApplicationItem } from '../types';
 import { compressImageFile, exportDataAsJson, importDataFromJson, resetToDefaultData } from '../services/storageService';
@@ -40,14 +40,22 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     category: 'General'
   });
 
-  // Form states - Gallery
-  const [galleryForm, setGalleryForm] = useState<{ id?: string; title: string; url: string; desc: string; date: string }>({
+  // Form states - Gallery (Multiple Images + Cover Selection)
+  const [galleryForm, setGalleryForm] = useState<{
+    id?: string;
+    title: string;
+    desc: string;
+    date: string;
+    images: string[];
+    coverIndex: number;
+  }>({
     title: '',
-    url: '',
     desc: '',
-    date: ''
+    date: '',
+    images: [],
+    coverIndex: 0
   });
-  const [previewImage, setPreviewImage] = useState<string>('');
+  const [urlInput, setUrlInput] = useState<string>('');
   const [isCompressing, setIsCompressing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -167,31 +175,79 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     setNoticeForm({ title: '', date: '', body: '', isImportant: true, category: 'General' });
   };
 
-  // --- GALLERY OPERATIONS ---
+  // --- GALLERY OPERATIONS (Multiple Images & Cover Selection) ---
   const handleImageFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     try {
       setIsCompressing(true);
-      const compressed = await compressImageFile(file, 1000, 0.75);
-      setPreviewImage(compressed);
-      setGalleryForm((prev) => ({ ...prev, url: compressed }));
-      triggerToast('Image processed and optimized!');
+      const compressPromises = Array.from(files).map((f) => compressImageFile(f, 1000, 0.75));
+      const compressedList = await Promise.all(compressPromises);
+      setGalleryForm((prev) => {
+        const nextImages = [...prev.images, ...compressedList];
+        return {
+          ...prev,
+          images: nextImages,
+          coverIndex: prev.images.length === 0 ? 0 : Math.min(prev.coverIndex, nextImages.length - 1)
+        };
+      });
+      triggerToast(`Added ${compressedList.length} image(s)! You can choose which one is the Cover.`);
     } catch (err: any) {
-      triggerToast(err.message || 'Error processing image', 'error');
+      triggerToast(err.message || 'Error processing images', 'error');
     } finally {
       setIsCompressing(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  const handleAddImageUrl = () => {
+    const trimmed = urlInput.trim();
+    if (!trimmed) return;
+    setGalleryForm((prev) => {
+      const nextImages = [...prev.images, trimmed];
+      return {
+        ...prev,
+        images: nextImages,
+        coverIndex: prev.images.length === 0 ? 0 : prev.coverIndex
+      };
+    });
+    setUrlInput('');
+    triggerToast('Image URL added to post!');
+  };
+
+  const handleSetCover = (index: number) => {
+    setGalleryForm((prev) => ({ ...prev, coverIndex: index }));
+    triggerToast(`Image #${index + 1} selected as Cover Photo!`);
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setGalleryForm((prev) => {
+      const nextImages = prev.images.filter((_, i) => i !== index);
+      let nextCover = prev.coverIndex;
+      if (nextCover >= nextImages.length) {
+        nextCover = Math.max(0, nextImages.length - 1);
+      }
+      return {
+        ...prev,
+        images: nextImages,
+        coverIndex: nextCover
+      };
+    });
   };
 
   const handleSaveGallery = async (e: React.FormEvent) => {
     e.preventDefault();
-    const finalUrl = galleryForm.url.trim() || previewImage;
-    if (!galleryForm.title.trim() || !finalUrl) {
-      triggerToast('Photo title and an image (upload or URL) are required', 'error');
+    if (!galleryForm.title.trim()) {
+      triggerToast('Post title is required', 'error');
       return;
     }
+    if (galleryForm.images.length === 0) {
+      triggerToast('Please upload or add at least 1 image to this gallery post', 'error');
+      return;
+    }
+
+    const coverUrl = galleryForm.images[galleryForm.coverIndex] || galleryForm.images[0];
 
     let updatedGallery = [...clubData.gallery];
     if (galleryForm.id) {
@@ -201,24 +257,26 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           ? {
               ...g,
               title: galleryForm.title.trim(),
-              url: finalUrl,
+              url: coverUrl,
+              images: galleryForm.images,
               desc: galleryForm.desc.trim() || 'Club event highlight',
               date: galleryForm.date.trim() || '2025'
             }
           : g
       );
-      triggerToast('Photo updated and permanently saved!');
+      triggerToast('Gallery post updated and permanently saved!');
     } else {
       // Add
       const newItem: GalleryItem = {
         id: String(Date.now()),
         title: galleryForm.title.trim(),
-        url: finalUrl,
+        url: coverUrl,
+        images: galleryForm.images,
         desc: galleryForm.desc.trim() || 'Event photo highlight from SPI IT Club.',
         date: galleryForm.date.trim() || 'Recent'
       };
       updatedGallery = [newItem, ...updatedGallery];
-      triggerToast('Photo uploaded and permanently saved!');
+      triggerToast(`Gallery post with ${galleryForm.images.length} photo(s) published!`);
     }
 
     await onUpdateData({ ...clubData, gallery: updatedGallery });
@@ -226,27 +284,29 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   const handleEditGallery = (item: GalleryItem) => {
+    const images = item.images && item.images.length > 0 ? item.images : (item.url ? [item.url] : []);
+    const coverIdx = images.indexOf(item.url);
     setGalleryForm({
       id: item.id,
       title: item.title,
-      url: item.url,
       desc: item.desc,
-      date: item.date || ''
+      date: item.date || '',
+      images: images,
+      coverIndex: coverIdx >= 0 ? coverIdx : 0
     });
-    setPreviewImage(item.url);
   };
 
   const handleDeleteGallery = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this gallery photo?')) return;
+    if (!confirm('Are you sure you want to delete this gallery post?')) return;
     const updated = clubData.gallery.filter((g) => g.id !== id);
     await onUpdateData({ ...clubData, gallery: updated });
-    triggerToast('Photo removed permanently.');
+    triggerToast('Post removed permanently.');
     if (galleryForm.id === id) handleResetGalleryForm();
   };
 
   const handleResetGalleryForm = () => {
-    setGalleryForm({ title: '', url: '', desc: '', date: '' });
-    setPreviewImage('');
+    setGalleryForm({ title: '', desc: '', date: '', images: [], coverIndex: 0 });
+    setUrlInput('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -478,30 +538,30 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-3xl w-full p-5 sm:p-8 shadow-2xl relative my-6 max-h-[92vh] flex flex-col border border-slate-200">
+    <div className="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="neo-box-lg bg-[#FFFDF7] rounded-2xl max-w-3xl w-full p-5 sm:p-8 relative my-6 max-h-[92vh] flex flex-col">
         
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-slate-400 hover:text-slate-800 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer"
+          className="neo-btn absolute top-5 right-5 bg-white text-black p-1.5 rounded-lg cursor-pointer"
         >
-          <X className="w-6 h-6" />
+          <X className="w-5 h-5 stroke-[2.5]" />
         </button>
 
         {/* Global Toast Message */}
         {statusMessage && (
           <div
-            className={`absolute top-4 left-6 right-16 px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg flex items-center gap-2 z-10 transition-all ${
+            className={`absolute top-4 left-6 right-16 px-4 py-2.5 rounded-lg text-xs font-black z-10 transition-all border-2 border-black shadow-[3px_3px_0px_#000] flex items-center gap-2 ${
               statusMessage.type === 'success'
-                ? 'bg-emerald-600 text-white'
-                : 'bg-red-600 text-white'
+                ? 'bg-[#10B981] text-black'
+                : 'bg-[#FF5A5F] text-white'
             }`}
           >
             {statusMessage.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 shrink-0 stroke-[2.5]" />
             ) : (
-              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <AlertTriangle className="w-4 h-4 shrink-0 stroke-[2.5]" />
             )}
             <span>{statusMessage.text}</span>
           </div>
@@ -511,20 +571,20 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         {!isAuthenticated ? (
           <div className="py-8 my-auto">
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-[#003366] text-[#F5B012] rounded-3xl flex items-center justify-center mx-auto mb-3 shadow-lg">
-                <Lock className="w-8 h-8" />
+              <div className="w-16 h-16 bg-[#FFE600] border-2 border-black text-black rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-[4px_4px_0px_#000]">
+                <Lock className="w-8 h-8 stroke-[2.5]" />
               </div>
-              <h3 className="text-2xl font-black text-[#003366]">Admin Portal Access</h3>
-              <p className="text-xs text-slate-500 mt-1">
+              <h3 className="text-2xl font-black text-black uppercase">Admin Portal Access</h3>
+              <p className="text-xs text-slate-700 font-bold mt-1">
                 Enter your administrative passcode to manage website content permanently
               </p>
             </div>
 
             <form onSubmit={handleLogin} className="max-w-xs mx-auto space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Passcode</label>
+                <label className="block text-xs font-black text-black uppercase mb-1">Passcode</label>
                 <div className="relative">
-                  <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <KeyRound className="w-4 h-4 text-black absolute left-3 top-3 stroke-[2.5]" />
                   <input
                     type="password"
                     autoFocus
@@ -535,25 +595,25 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       setPasscode(e.target.value);
                       setLoginError('');
                     }}
-                    className="w-full border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#003366]"
+                    className="w-full border-2 border-black rounded-lg pl-9 pr-3 py-2.5 text-sm bg-white font-medium focus:outline-none focus:shadow-[3px_3px_0px_#000]"
                   />
                 </div>
                 {loginError && (
-                  <p className="text-red-500 text-xs font-semibold mt-1.5 flex items-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5" />
+                  <p className="text-[#FF5A5F] text-xs font-black mt-1.5 flex items-center gap-1">
+                    <AlertTriangle className="w-3.5 h-3.5 stroke-[2.5]" />
                     <span>{loginError}</span>
                   </p>
                 )}
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Default passcode: <span className="font-bold text-[#003366]">1125</span>
+                <p className="text-[11px] text-slate-600 font-bold mt-1.5">
+                  Default passcode: <span className="font-black text-black bg-[#FFE600] px-1.5 py-0.5 rounded border border-black">1125</span>
                 </p>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-[#003366] hover:bg-slate-800 text-[#F5B012] font-black py-2.5 rounded-xl transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                className="neo-btn w-full bg-[#FFE600] text-black font-black py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Unlock className="w-4 h-4" />
+                <Unlock className="w-4 h-4 stroke-[2.5]" />
                 <span>Unlock Dashboard</span>
               </button>
             </form>
@@ -563,15 +623,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           <div className="flex flex-col h-full overflow-hidden">
             
             {/* Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 pb-3 mb-4 gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b-2 border-black pb-3 mb-4 gap-2">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-black text-[#003366] flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <h3 className="text-xl font-black text-black uppercase flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#10B981] border border-black"></span>
                     <span>Content Management Dashboard</span>
                   </h3>
                 </div>
-                <p className="text-[11px] text-emerald-700 font-medium">
+                <p className="text-[11px] text-emerald-800 font-bold">
                   ✓ Permanent Persistence Active: Changes auto-saved to disk and cache
                 </p>
               </div>
@@ -579,15 +639,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleExportBackup}
-                  className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                  className="neo-btn bg-white text-black font-black text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
                   title="Download complete JSON backup"
                 >
-                  <Download className="w-3.5 h-3.5" />
+                  <Download className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>Backup</span>
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="text-xs bg-red-100 hover:bg-red-200 text-red-700 font-bold px-3 py-1.5 rounded-lg cursor-pointer"
+                  className="neo-btn bg-[#FF5A5F] text-white font-black text-xs px-3 py-1.5 rounded-lg cursor-pointer"
                 >
                   Logout
                 </button>
@@ -595,16 +655,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex border-b border-slate-200 text-xs sm:text-sm font-bold gap-1 sm:gap-2 overflow-x-auto pb-1 shrink-0">
+            <div className="flex border-b-2 border-black text-xs font-black gap-1.5 sm:gap-2 overflow-x-auto pb-2 shrink-0">
               <button
                 onClick={() => setActiveTab('notices')}
                 className={`py-2 px-3 rounded-lg whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'notices'
-                    ? 'bg-[#003366] text-[#F5B012]'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'neo-badge bg-[#FFE600] text-black'
+                    : 'bg-white text-black border-2 border-black/30 hover:border-black'
                 }`}
               >
-                <Megaphone className="w-3.5 h-3.5" />
+                <Megaphone className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Notices ({clubData.notices.length})</span>
               </button>
 
@@ -612,11 +672,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 onClick={() => setActiveTab('gallery')}
                 className={`py-2 px-3 rounded-lg whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'gallery'
-                    ? 'bg-[#003366] text-[#F5B012]'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'neo-badge bg-[#FFE600] text-black'
+                    : 'bg-white text-black border-2 border-black/30 hover:border-black'
                 }`}
               >
-                <ImageIcon className="w-3.5 h-3.5" />
+                <ImageIcon className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Gallery ({clubData.gallery.length})</span>
               </button>
 
@@ -624,11 +684,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 onClick={() => setActiveTab('committee')}
                 className={`py-2 px-3 rounded-lg whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'committee'
-                    ? 'bg-[#003366] text-[#F5B012]'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'neo-badge bg-[#FFE600] text-black'
+                    : 'bg-white text-black border-2 border-black/30 hover:border-black'
                 }`}
               >
-                <Users className="w-3.5 h-3.5" />
+                <Users className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Committee &amp; Founders</span>
               </button>
 
@@ -636,11 +696,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 onClick={() => setActiveTab('posts')}
                 className={`py-2 px-3 rounded-lg whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'posts'
-                    ? 'bg-[#003366] text-[#F5B012]'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'neo-badge bg-[#FFE600] text-black'
+                    : 'bg-white text-black border-2 border-black/30 hover:border-black'
                 }`}
               >
-                <Facebook className="w-3.5 h-3.5" />
+                <Facebook className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>FB Posts ({clubData.fbPosts.length})</span>
               </button>
 
@@ -648,11 +708,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 onClick={() => setActiveTab('applications')}
                 className={`py-2 px-3 rounded-lg whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'applications'
-                    ? 'bg-[#003366] text-[#F5B012]'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'neo-badge bg-[#FFE600] text-black'
+                    : 'bg-white text-black border-2 border-black/30 hover:border-black'
                 }`}
               >
-                <FileText className="w-3.5 h-3.5" />
+                <FileText className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Applications ({clubData.applications?.length || 0})</span>
               </button>
 
@@ -660,11 +720,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 onClick={() => setActiveTab('settings')}
                 className={`py-2 px-3 rounded-lg whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'settings'
-                    ? 'bg-[#003366] text-[#F5B012]'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'neo-badge bg-[#FFE600] text-black'
+                    : 'bg-white text-black border-2 border-black/30 hover:border-black'
                 }`}
               >
-                <KeyRound className="w-3.5 h-3.5" />
+                <KeyRound className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Settings</span>
               </button>
             </div>
@@ -806,115 +866,197 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 </div>
               )}
 
-              {/* TAB 2: GALLERY MANAGEMENT */}
+              {/* TAB 2: GALLERY MANAGEMENT (Multiple Images & Cover Selection) */}
               {activeTab === 'gallery' && (
                 <div className="space-y-6">
                   {/* Form */}
                   <form onSubmit={handleSaveGallery} className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200">
-                    <h4 className="font-extrabold text-[#003366] text-sm mb-3">
-                      {galleryForm.id ? 'Edit Photo Details' : 'Add New Photo to Gallery'}
-                    </h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-extrabold text-[#003366] text-sm flex items-center gap-1.5">
+                        <Layers className="w-4 h-4 text-[#00A896]" />
+                        <span>{galleryForm.id ? 'Edit Gallery Post & Images' : 'Create New Gallery Post (Multi-Photo)'}</span>
+                      </h4>
+                      {galleryForm.id && (
+                        <span className="text-[11px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">
+                          Editing existing post
+                        </span>
+                      )}
+                    </div>
 
-                    <div className="space-y-3 text-sm">
-                      <input
-                        type="text"
-                        required
-                        placeholder="Photo Title / Event Name (e.g. Programming Bootcamp 2025)"
-                        value={galleryForm.title}
-                        onChange={(e) => setGalleryForm({ ...galleryForm, title: e.target.value })}
-                        className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white"
-                      />
-
-                      {/* Drag & Drop Upload Zone */}
-                      <div
-                        onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed border-slate-300 hover:border-[#003366] rounded-2xl p-5 text-center cursor-pointer bg-white transition relative group"
-                      >
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageFileSelect}
-                          className="hidden"
-                        />
-
-                        {previewImage ? (
-                          <div className="flex flex-col items-center gap-2">
-                            <img
-                              src={previewImage}
-                              alt="Upload preview"
-                              className="h-36 max-w-full object-contain rounded-xl border border-slate-200 shadow-sm"
-                            />
-                            <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Photo selected &amp; optimized! Click to change photo</span>
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="space-y-1">
-                            <div className="w-12 h-12 bg-blue-50 text-[#003366] rounded-2xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
-                              <UploadCloud className="w-6 h-6 text-[#00A896]" />
-                            </div>
-                            <p className="text-xs font-bold text-slate-700">
-                              Drag &amp; drop event image here, or <span className="text-[#003366] underline">Browse file</span>
-                            </p>
-                            <p className="text-[10px] text-slate-400">
-                              PNG, JPG, WEBP • Auto-compressed for high speed
-                            </p>
-                          </div>
-                        )}
-
-                        {isCompressing && (
-                          <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center rounded-2xl">
-                            <div className="text-xs font-bold text-[#003366] flex items-center gap-2">
-                              <span className="w-4 h-4 border-2 border-[#003366] border-t-transparent rounded-full animate-spin"></span>
-                              <span>Optimizing image...</span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
+                    <div className="space-y-4 text-sm">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <input
                           type="text"
-                          placeholder="Or direct Image URL (https://...)"
-                          value={galleryForm.url.startsWith('data:') ? '' : galleryForm.url}
-                          onChange={(e) => {
-                            setGalleryForm({ ...galleryForm, url: e.target.value });
-                            setPreviewImage(e.target.value);
-                          }}
-                          className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white"
+                          required
+                          placeholder="Post Title (e.g. Programming Bootcamp 2025)"
+                          value={galleryForm.title}
+                          onChange={(e) => setGalleryForm({ ...galleryForm, title: e.target.value })}
+                          className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium"
                         />
                         <input
                           type="text"
                           placeholder="Event Date / Tag (e.g. Feb 2025)"
                           value={galleryForm.date}
                           onChange={(e) => setGalleryForm({ ...galleryForm, date: e.target.value })}
-                          className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white"
+                          className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium"
                         />
                       </div>
 
                       <textarea
                         rows={2}
-                        placeholder="Short photo description..."
+                        placeholder="Post description or event caption..."
                         value={galleryForm.desc}
                         onChange={(e) => setGalleryForm({ ...galleryForm, desc: e.target.value })}
-                        className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white"
+                        className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium"
                       ></textarea>
+
+                      {/* Multi-Image Upload Drop Zone */}
+                      <div
+                        onClick={() => fileInputRef.current?.click()}
+                        className="border-2 border-dashed border-slate-300 hover:border-[#003366] hover:bg-blue-50/30 rounded-2xl p-4 sm:p-5 text-center cursor-pointer bg-white transition relative group"
+                      >
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handleImageFileSelect}
+                          className="hidden"
+                        />
+
+                        <div className="space-y-1">
+                          <div className="w-12 h-12 bg-blue-50 text-[#003366] rounded-2xl flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                            <UploadCloud className="w-6 h-6 text-[#00A896]" />
+                          </div>
+                          <p className="text-xs font-bold text-slate-800">
+                            Click to select <span className="text-[#003366] underline">one or multiple images</span> from your device
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            Select multiple photos at once • Auto-compressed • Choose cover image below
+                          </p>
+                        </div>
+
+                        {isCompressing && (
+                          <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center rounded-2xl">
+                            <div className="text-xs font-bold text-[#003366] flex items-center gap-2">
+                              <span className="w-4 h-4 border-2 border-[#003366] border-t-transparent rounded-full animate-spin"></span>
+                              <span>Optimizing images...</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Add Image by URL Bar */}
+                      <div className="flex gap-2">
+                        <input
+                          type="url"
+                          placeholder="Or paste an image URL (https://...)"
+                          value={urlInput}
+                          onChange={(e) => setUrlInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddImageUrl();
+                            }
+                          }}
+                          className="flex-1 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddImageUrl}
+                          className="bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer"
+                        >
+                          + Add URL
+                        </button>
+                      </div>
+
+                      {/* Attached Images Grid & Cover Selector */}
+                      {galleryForm.images.length > 0 && (
+                        <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-3">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-slate-700 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
+                              <span>Attached Photos ({galleryForm.images.length})</span>
+                            </span>
+                            <span className="text-[11px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                              ★ Cover is marked with a gold badge
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-60 overflow-y-auto p-1">
+                            {galleryForm.images.map((imgUrl, idx) => {
+                              const isCover = idx === galleryForm.coverIndex;
+                              return (
+                                <div
+                                  key={idx}
+                                  className={`relative group rounded-xl overflow-hidden border-2 transition ${
+                                    isCover
+                                      ? 'border-[#FFE600] ring-2 ring-[#FFE600]/50 shadow-md'
+                                      : 'border-slate-200 hover:border-slate-400'
+                                  } bg-slate-100 flex flex-col`}
+                                >
+                                  <div className="h-28 w-full overflow-hidden bg-black flex items-center justify-center">
+                                    <img
+                                      src={imgUrl}
+                                      alt={`Attachment #${idx + 1}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+
+                                  {/* Cover Photo Badge */}
+                                  {isCover ? (
+                                    <div className="bg-[#FFE600] text-black text-[10px] font-black px-2 py-1 flex items-center justify-center gap-1 border-t border-black">
+                                      <Star className="w-3 h-3 fill-black text-black" />
+                                      <span>COVER PHOTO</span>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSetCover(idx)}
+                                      className="bg-slate-800/80 hover:bg-[#FFE600] hover:text-black text-white text-[10px] font-bold py-1 px-1 text-center transition cursor-pointer"
+                                    >
+                                      Set as Cover
+                                    </button>
+                                  )}
+
+                                  {/* Remove image button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveImage(idx)}
+                                    className="absolute top-1 right-1 bg-red-600/90 hover:bg-red-700 text-white p-1 rounded-md opacity-80 group-hover:opacity-100 transition cursor-pointer shadow"
+                                    title="Remove this image"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+
+                                  {/* Photo Index indicator */}
+                                  <span className="absolute top-1 left-1 bg-black/70 text-white text-[9px] font-mono font-bold px-1.5 py-0.5 rounded">
+                                    #{idx + 1}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                       <div className="flex gap-2 pt-2">
                         <button
                           type="submit"
-                          className="bg-[#003366] hover:bg-slate-800 text-[#F5B012] px-5 py-2 rounded-xl font-bold text-xs transition shadow flex items-center gap-1.5 cursor-pointer"
+                          className="bg-[#003366] hover:bg-slate-800 text-[#F5B012] px-5 py-2.5 rounded-xl font-bold text-xs transition shadow flex items-center gap-1.5 cursor-pointer"
                         >
                           <Save className="w-3.5 h-3.5" />
-                          <span>{galleryForm.id ? 'Save Photo Changes' : 'Add to Gallery Permanently'}</span>
+                          <span>
+                            {galleryForm.id
+                              ? 'Save Post Changes'
+                              : `Publish Post with ${galleryForm.images.length || 0} Photo(s)`}
+                          </span>
                         </button>
                         {galleryForm.id && (
                           <button
                             type="button"
                             onClick={handleResetGalleryForm}
-                            className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs transition cursor-pointer"
+                            className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-xs transition cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -926,41 +1068,54 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                   {/* List of existing photos */}
                   <div>
                     <h4 className="font-extrabold text-slate-700 text-xs uppercase tracking-wider mb-2">
-                      Existing Gallery Photos ({clubData.gallery.length})
+                      Existing Gallery Posts ({clubData.gallery.length})
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto pr-1">
-                      {clubData.gallery.map((g) => (
-                        <div
-                          key={g.id}
-                          className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-slate-200 text-xs shadow-xs"
-                        >
-                          <img
-                            src={g.url}
-                            alt={g.title}
-                            className="w-14 h-14 object-cover rounded-lg shrink-0 border"
-                          />
-                          <div className="truncate flex-1">
-                            <span className="font-bold text-slate-800 block truncate">{g.title}</span>
-                            <span className="text-[10px] text-slate-400 block truncate">{g.desc}</span>
+                      {clubData.gallery.map((g) => {
+                        const totalPhotos = g.images && g.images.length > 0 ? g.images.length : 1;
+                        return (
+                          <div
+                            key={g.id}
+                            className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-slate-200 text-xs shadow-xs"
+                          >
+                            <div className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 border border-slate-300">
+                              <img
+                                src={g.url}
+                                alt={g.title}
+                                className="w-full h-full object-cover"
+                              />
+                              {totalPhotos > 1 && (
+                                <span className="absolute bottom-0 inset-x-0 bg-black/80 text-[#FFE600] text-[9px] font-black text-center py-0.5">
+                                  {totalPhotos} photos
+                                </span>
+                              )}
+                            </div>
+                            <div className="truncate flex-1">
+                              <span className="font-bold text-slate-800 block truncate">{g.title}</span>
+                              <span className="text-[10px] text-slate-500 block truncate">
+                                {g.date || 'Recent'} • {totalPhotos} image{totalPhotos > 1 ? 's' : ''}
+                              </span>
+                              <span className="text-[10px] text-slate-400 block truncate">{g.desc}</span>
+                            </div>
+                            <div className="flex flex-col gap-1 shrink-0">
+                              <button
+                                onClick={() => handleEditGallery(g)}
+                                className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-bold"
+                                title="Edit Post"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteGallery(g.id)}
+                                className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-bold"
+                                title="Delete Post"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
-                          <div className="flex flex-col gap-1 shrink-0">
-                            <button
-                              onClick={() => handleEditGallery(g)}
-                              className="p-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
-                              title="Edit"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteGallery(g.id)}
-                              className="p-1 bg-red-50 text-red-600 rounded hover:bg-red-100"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

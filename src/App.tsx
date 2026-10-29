@@ -14,6 +14,7 @@ import { Footer } from './components/Footer';
 import { AdminModal } from './components/AdminModal';
 import { MembershipModal } from './components/MembershipModal';
 import { LightboxModal } from './components/LightboxModal';
+import { CustomCursor } from './components/CustomCursor';
 
 export default function App() {
   // Synchronous cache hydration on page refresh: zero flash of default content
@@ -23,7 +24,7 @@ export default function App() {
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryItem | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize data on mount
+  // Initialize data on mount & listen to secret #admin1 hash
   useEffect(() => {
     async function initData() {
       try {
@@ -38,6 +39,16 @@ export default function App() {
       }
     }
     initData();
+
+    // Check for #admin1 URL hash trigger
+    const checkHash = () => {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === '#admin1' || hash === '#admin') {
+        setIsAdminOpen(true);
+      }
+    };
+    checkHash();
+    window.addEventListener('hashchange', checkHash);
 
     // Listen to changes across tabs or windows
     const handleStorageUpdate = (e: any) => {
@@ -55,6 +66,7 @@ export default function App() {
     });
 
     return () => {
+      window.removeEventListener('hashchange', checkHash);
       window.removeEventListener('spi_club_data_changed', handleStorageUpdate);
       unsubscribeCloud();
     };
@@ -65,6 +77,15 @@ export default function App() {
     setClubData(newData);
     const success = await persistClubData(newData);
     return success;
+  };
+
+  // Close Admin Modal and clean up hash cleanly
+  const handleCloseAdmin = () => {
+    setIsAdminOpen(false);
+    const hash = window.location.hash.toLowerCase();
+    if (hash === '#admin1' || hash === '#admin') {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
   };
 
   // Membership application submission handler
@@ -91,10 +112,12 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F4F7FB] text-slate-800 antialiased selection:bg-[#F5B012]/30 selection:text-[#003366]">
-      {/* Navigation */}
+    <div className="min-h-screen flex flex-col bg-[#FFFDF7] text-black antialiased selection:bg-[#FFE600] selection:text-black font-sans">
+      {/* Tech Creative Cursor (Crosshair Reticle & HUD) */}
+      <CustomCursor />
+
+      {/* Navigation (Public Admin button removed, accessed via #admin1) */}
       <Navbar
-        onOpenAdmin={() => setIsAdminOpen(true)}
         onOpenJoin={() => setIsJoinOpen(true)}
       />
 
@@ -107,7 +130,6 @@ export default function App() {
       {/* Notice Board Section */}
       <NoticeBoard
         notices={clubData.notices}
-        onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
       {/* Main Content Body */}
@@ -119,11 +141,10 @@ export default function App() {
           onOpenJoin={() => setIsJoinOpen(true)}
         />
 
-        {/* Section 2: Photo Gallery */}
+        {/* Section 2: Photo Gallery (Multi-photo albums with cover image support) */}
         <GallerySection
           gallery={clubData.gallery}
           onSelectPhoto={(photo) => setSelectedPhoto(photo)}
-          onOpenAdmin={() => setIsAdminOpen(true)}
         />
 
         {/* Section 3: Founder Panel */}
@@ -143,16 +164,15 @@ export default function App() {
         />
       </main>
 
-      {/* Footer */}
+      {/* Footer (with discrete #admin1 link) */}
       <Footer
         facebookUrl={clubData.settings?.facebookUrl || "https://www.facebook.com/SPIitClub01"}
-        onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
-      {/* Admin Panel Modal */}
+      {/* Admin Panel Modal (Opened via #admin1) */}
       <AdminModal
         isOpen={isAdminOpen}
-        onClose={() => setIsAdminOpen(false)}
+        onClose={handleCloseAdmin}
         clubData={clubData}
         onUpdateData={handleUpdateData}
       />
@@ -164,7 +184,7 @@ export default function App() {
         onSubmit={handleMembershipSubmit}
       />
 
-      {/* Lightbox Photo Preview Modal */}
+      {/* Lightbox Multi-Photo Album Preview Modal */}
       <LightboxModal
         photo={selectedPhoto}
         onClose={() => setSelectedPhoto(null)}

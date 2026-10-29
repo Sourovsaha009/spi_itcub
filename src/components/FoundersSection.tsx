@@ -1,6 +1,6 @@
 import React from 'react';
 import { FounderItem } from '../types';
-import { Award, Sparkles } from 'lucide-react';
+import { Award } from 'lucide-react';
 
 interface FoundersSectionProps {
   founders: FounderItem[];
@@ -10,15 +10,15 @@ export const FoundersSection: React.FC<FoundersSectionProps> = ({ founders }) =>
   return (
     <section id="founders" className="scroll-mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center mb-12">
-        <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#00A896] bg-[#00A896]/10 px-3 py-1 rounded-full uppercase tracking-wider mb-2">
-          <Award className="w-3.5 h-3.5 text-[#00A896]" />
+        <div className="inline-flex items-center gap-1.5 neo-badge bg-[#FFE600] text-black text-xs font-black uppercase mb-3">
+          <Award className="w-3.5 h-3.5 stroke-[3]" />
           <span>Roots &amp; Heritage</span>
         </div>
-        <h2 className="text-3xl sm:text-4xl font-black text-[#003366] tracking-tight">
+        <h2 className="text-3xl sm:text-4xl font-black text-black tracking-tight uppercase">
           Founder Panel
         </h2>
-        <div className="w-20 h-1.5 bg-[#00A896] mx-auto rounded-full mt-3"></div>
-        <p className="text-slate-600 mt-3 max-w-2xl mx-auto text-sm sm:text-base">
+        <div className="w-20 h-1.5 bg-black mx-auto mt-2 mb-3"></div>
+        <p className="text-slate-700 font-medium mt-2 max-w-2xl mx-auto text-sm sm:text-base">
           The visionaries and mentors who laid the cornerstone of SPI IT Club in 2025.
         </p>
       </div>
@@ -27,28 +27,27 @@ export const FoundersSection: React.FC<FoundersSectionProps> = ({ founders }) =>
         {founders.map((founder) => (
           <div
             key={founder.id}
-            className="group relative bg-gradient-to-br from-[#003366] via-[#0A192F] to-[#002244] text-white p-8 rounded-3xl shadow-xl border border-[#F5B012]/30 text-center hover:border-[#F5B012] transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+            className="neo-card bg-[#003366] text-white p-8 rounded-2xl text-center relative overflow-hidden group"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#F5B012]/5 rounded-bl-full pointer-events-none group-hover:scale-125 transition-transform"></div>
-
-            <div className="w-20 h-20 bg-[#F5B012]/15 border-2 border-[#F5B012] text-[#F5B012] rounded-full flex items-center justify-center text-3xl mx-auto mb-5 shadow-lg group-hover:scale-110 transition-transform duration-300">
+            {/* Top decorative badge */}
+            <div className="w-20 h-20 bg-[#FFE600] border-2 border-black text-black rounded-2xl flex items-center justify-center text-3xl mx-auto mb-5 shadow-[4px_4px_0px_0px_#000] group-hover:-translate-y-1 transition-transform duration-150">
               <i className={`fa-solid ${founder.icon || 'fa-users-gear'}`}></i>
             </div>
 
-            <h3 className="font-extrabold text-2xl text-white mb-1.5 tracking-wide">
+            <h3 className="font-black text-2xl text-white mb-1.5 tracking-tight">
               {founder.name}
             </h3>
             
-            <p className="text-[#F5B012] text-sm sm:text-base font-bold tracking-wide">
+            <p className="text-[#FFE600] text-sm sm:text-base font-black tracking-wide">
               {founder.role}
             </p>
 
-            <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-center gap-2">
-              <span className="inline-block bg-white/10 text-xs px-3.5 py-1 rounded-full text-slate-200 font-medium">
+            <div className="mt-6 pt-5 border-t-2 border-white/20 flex items-center justify-center gap-3">
+              <span className="neo-badge bg-white text-black text-xs font-black">
                 {founder.session}
               </span>
               {founder.dept && (
-                <span className="inline-block bg-[#00A896]/30 text-emerald-300 border border-emerald-400/30 text-xs px-3 py-1 rounded-full font-medium">
+                <span className="neo-badge bg-[#10B981] text-black text-xs font-black">
                   {founder.dept}
                 </span>
               )}

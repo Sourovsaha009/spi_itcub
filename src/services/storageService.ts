@@ -37,20 +37,34 @@ export const defaultClubData: ClubData = {
       id: "1",
       title: "Club Launch Ceremony 2025",
       url: "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80",
-      desc: "Official launching event of SPI IT Club with faculty members and CST students.",
+      images: [
+        "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=800&q=80"
+      ],
+      desc: "Official launching ceremony of SPI IT Club with faculty members and CST department students.",
       date: "Feb 2025"
     },
     {
       id: "2",
-      title: "Hands-on Programming Session",
+      title: "Hands-on Programming Bootcamp",
       url: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
-      desc: "Interactive coding workshop held at the computer lab for CST batch.",
+      images: [
+        "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80"
+      ],
+      desc: "Interactive coding workshop held at the computer lab for CST students.",
       date: "Feb 2025"
     },
     {
       id: "3",
       title: "Executive Panel Meeting",
       url: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80",
+      images: [
+        "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=800&q=80"
+      ],
       desc: "Strategic planning meeting for upcoming technical competitions and bootcamps.",
       date: "Jan 2025"
     }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { FbPostItem } from '../types';
-import { Facebook, ExternalLink, MessageSquare, ThumbsUp, Share2 } from 'lucide-react';
+import { Facebook, ExternalLink, MessageSquare, ThumbsUp } from 'lucide-react';
 
 interface FacebookSectionProps {
   posts: FbPostItem[];
@@ -13,20 +13,20 @@ export const FacebookSection: React.FC<FacebookSectionProps> = ({
 }) => {
   return (
     <section id="fb-posts" className="scroll-mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-lg border border-slate-200">
+      <div className="neo-box-lg bg-white rounded-2xl p-6 sm:p-10">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 border-b border-slate-100 pb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 border-b-[3px] border-black pb-6">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg shadow-sm">
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="w-10 h-10 rounded-xl bg-[#2563EB] text-white flex items-center justify-center border-2 border-black shadow-[3px_3px_0px_#000]">
                 <Facebook className="w-5 h-5 fill-current" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[#003366] tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-black text-black tracking-tight uppercase">
                 Official Facebook Updates
               </h2>
             </div>
-            <p className="text-slate-600 text-xs sm:text-sm">
+            <p className="text-slate-700 text-xs sm:text-sm font-bold">
               Live highlights, registration alerts, and activity posts from our official Facebook community page
             </p>
           </div>
@@ -35,10 +35,10 @@ export const FacebookSection: React.FC<FacebookSectionProps> = ({
             href={facebookUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-md flex items-center gap-2 cursor-pointer shrink-0"
+            className="neo-btn bg-[#2563EB] text-white font-black px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 cursor-pointer shrink-0"
           >
             <span>Follow Our Page</span>
-            <ExternalLink className="w-4 h-4" />
+            <ExternalLink className="w-4 h-4 stroke-[2.5]" />
           </a>
         </div>
 
@@ -47,34 +47,34 @@ export const FacebookSection: React.FC<FacebookSectionProps> = ({
           {posts.map((post) => (
             <div
               key={post.id}
-              className="bg-slate-50 hover:bg-white rounded-2xl p-6 border border-slate-200 hover:border-blue-300 flex flex-col justify-between shadow-xs hover:shadow-xl transition-all duration-300"
+              className="neo-card bg-[#FFFDF7] rounded-xl p-6 flex flex-col justify-between group"
             >
               <div>
-                <div className="flex items-center justify-between text-xs text-blue-600 font-bold mb-3">
-                  <div className="flex items-center gap-1.5">
-                    <Facebook className="w-4 h-4 fill-current" />
-                    <span>SPI IT CLUB POST</span>
+                <div className="flex items-center justify-between text-xs font-black mb-3">
+                  <div className="neo-badge bg-[#2563EB] text-white text-[10px] flex items-center gap-1">
+                    <Facebook className="w-3 h-3 fill-current" />
+                    <span>SPI IT POST</span>
                   </div>
-                  <span className="text-slate-400 font-normal">{post.date}</span>
+                  <span className="neo-badge bg-white text-black text-[10px] font-bold">{post.date}</span>
                 </div>
 
-                <h3 className="font-extrabold text-slate-900 text-base mb-2 leading-snug">
+                <h3 className="font-black text-black text-base mb-2 leading-snug group-hover:text-[#2563EB] transition-colors">
                   {post.title}
                 </h3>
 
-                <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-6">
+                <p className="text-slate-700 text-xs sm:text-sm leading-relaxed mb-6 font-medium">
                   {post.snippet}
                 </p>
               </div>
 
-              <div className="pt-4 border-t border-slate-200 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-3 text-slate-500">
+              <div className="pt-4 border-t-2 border-black flex items-center justify-between text-xs">
+                <div className="flex items-center gap-3 text-black font-bold">
                   <span className="flex items-center gap-1 text-[11px]">
-                    <ThumbsUp className="w-3.5 h-3.5 text-blue-600" />
+                    <ThumbsUp className="w-3.5 h-3.5 text-[#2563EB] stroke-[2.5]" />
                     <span>Like</span>
                   </span>
                   <span className="flex items-center gap-1 text-[11px]">
-                    <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
+                    <MessageSquare className="w-3.5 h-3.5 text-slate-500 stroke-[2.5]" />
                     <span>Comment</span>
                   </span>
                 </div>
@@ -83,10 +83,10 @@ export const FacebookSection: React.FC<FacebookSectionProps> = ({
                   href={post.link || facebookUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1.5 hover:underline"
+                  className="neo-btn bg-[#FFE600] text-black font-black px-3 py-1 rounded text-xs flex items-center gap-1.5"
                 >
                   <span>View Post</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ExternalLink className="w-3.5 h-3.5 stroke-[2.5]" />
                 </a>
               </div>
             </div>
