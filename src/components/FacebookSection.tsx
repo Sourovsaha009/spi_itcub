@@ -35,7 +35,7 @@ export const FacebookSection: React.FC<FacebookSectionProps> = ({
             href={facebookUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="neo-btn bg-[#2563EB] text-white font-black px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 cursor-pointer shrink-0"
+            className="neo-btn bg-[#2563EB] text-white font-black px-5 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 cursor-pointer shrink-0 min-h-[44px] w-full sm:w-auto"
           >
             <span>Follow Our Page</span>
             <ExternalLink className="w-4 h-4 stroke-[2.5]" />

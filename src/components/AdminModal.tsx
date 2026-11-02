@@ -5,7 +5,7 @@ import {
   Users, Megaphone, Facebook, FileText, KeyRound, Check, Plus, Star, Layers
 } from 'lucide-react';
 import { ClubData, NoticeItem, GalleryItem, CommitteeMember, FounderItem, FbPostItem, ApplicationItem } from '../types';
-import { compressImageFile, exportDataAsJson, importDataFromJson, resetToDefaultData } from '../services/storageService';
+import { compressImageFile, uploadImageToServer, exportDataAsJson, importDataFromJson, resetToDefaultData } from '../services/storageService';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -60,13 +60,26 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form states - Committee & Founders
-  const [memberForm, setMemberForm] = useState<{ id?: string; name: string; role: string; session: string; dept: string; type: 'committee' | 'founders'; icon?: string }>({
+  const [memberForm, setMemberForm] = useState<{
+    id?: string;
+    name: string;
+    role: string;
+    session: string;
+    dept: string;
+    type: 'committee' | 'founders';
+    icon?: string;
+    photoUrl?: string;
+  }>({
     name: '',
     role: '',
     session: 'Session 2021-22',
     dept: 'CST',
-    type: 'committee'
+    type: 'committee',
+    photoUrl: ''
   });
+  const [isMemberPhotoCompressing, setIsMemberPhotoCompressing] = useState(false);
+  const [memberPhotoUrlInput, setMemberPhotoUrlInput] = useState('');
+  const memberPhotoInputRef = useRef<HTMLInputElement>(null);
 
   // Form states - FB Posts
   const [postForm, setPostForm] = useState<{ id?: string; title: string; date: string; link: string; snippet: string }>({
@@ -182,17 +195,17 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
     try {
       setIsCompressing(true);
-      const compressPromises = Array.from(files).map((f) => compressImageFile(f, 1000, 0.75));
-      const compressedList = await Promise.all(compressPromises);
+      const uploadPromises = Array.from(files).map((f) => uploadImageToServer(f));
+      const uploadedList = await Promise.all(uploadPromises);
       setGalleryForm((prev) => {
-        const nextImages = [...prev.images, ...compressedList];
+        const nextImages = [...prev.images, ...uploadedList];
         return {
           ...prev,
           images: nextImages,
           coverIndex: prev.images.length === 0 ? 0 : Math.min(prev.coverIndex, nextImages.length - 1)
         };
       });
-      triggerToast(`Added ${compressedList.length} image(s)! You can choose which one is the Cover.`);
+      triggerToast(`Saved ${uploadedList.length} image(s) permanently! You can choose which one is the Cover.`);
     } catch (err: any) {
       triggerToast(err.message || 'Error processing images', 'error');
     } finally {
@@ -248,6 +261,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }
 
     const coverUrl = galleryForm.images[galleryForm.coverIndex] || galleryForm.images[0];
+    const dateFormatted = galleryForm.date.trim() || new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    let dateIso = '';
+    try {
+      const parsed = new Date(dateFormatted);
+      if (!isNaN(parsed.getTime())) {
+        dateIso = parsed.toISOString().split('T')[0];
+      }
+    } catch {}
 
     let updatedGallery = [...clubData.gallery];
     if (galleryForm.id) {
@@ -260,7 +281,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               url: coverUrl,
               images: galleryForm.images,
               desc: galleryForm.desc.trim() || 'Club event highlight',
-              date: galleryForm.date.trim() || '2025'
+              date: dateFormatted,
+              dateIso: dateIso || g.dateIso
             }
           : g
       );
@@ -273,7 +295,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         url: coverUrl,
         images: galleryForm.images,
         desc: galleryForm.desc.trim() || 'Event photo highlight from SPI IT Club.',
-        date: galleryForm.date.trim() || 'Recent'
+        date: dateFormatted,
+        dateIso: dateIso || new Date().toISOString().split('T')[0],
+        createdAt: Date.now()
       };
       updatedGallery = [newItem, ...updatedGallery];
       triggerToast(`Gallery post with ${galleryForm.images.length} photo(s) published!`);
@@ -311,6 +335,23 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   // --- COMMITTEE & FOUNDER OPERATIONS ---
+  const handleMemberPhotoFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsMemberPhotoCompressing(true);
+      const uploadedUrl = await uploadImageToServer(file);
+      setMemberForm((prev) => ({ ...prev, photoUrl: uploadedUrl }));
+      triggerToast('Member photo uploaded and saved permanently!');
+    } catch (err: any) {
+      triggerToast(err.message || 'Error processing photo', 'error');
+    } finally {
+      setIsMemberPhotoCompressing(false);
+      if (memberPhotoInputRef.current) memberPhotoInputRef.current.value = '';
+    }
+  };
+
   const handleSaveMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!memberForm.name.trim() || !memberForm.role.trim()) {
@@ -318,12 +359,21 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       return;
     }
 
+    const photoUrl = memberForm.photoUrl?.trim() || undefined;
+
     if (memberForm.type === 'founders') {
       let updatedFounders = [...clubData.founders];
       if (memberForm.id) {
         updatedFounders = updatedFounders.map((f) =>
           f.id === memberForm.id
-            ? { ...f, name: memberForm.name.trim(), role: memberForm.role.trim(), session: memberForm.session.trim(), dept: memberForm.dept.trim() }
+            ? {
+                ...f,
+                name: memberForm.name.trim(),
+                role: memberForm.role.trim(),
+                session: memberForm.session.trim(),
+                dept: memberForm.dept.trim(),
+                photoUrl
+              }
             : f
         );
         triggerToast('Founder updated and saved!');
@@ -334,7 +384,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           role: memberForm.role.trim(),
           session: memberForm.session.trim() || 'Established 2025',
           dept: memberForm.dept.trim() || 'CST',
-          icon: 'fa-users-gear'
+          icon: 'fa-users-gear',
+          photoUrl
         };
         updatedFounders = [...updatedFounders, newFounder];
         triggerToast('Founder added and saved!');
@@ -345,7 +396,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       if (memberForm.id) {
         updatedCommittee = updatedCommittee.map((c) =>
           c.id === memberForm.id
-            ? { ...c, name: memberForm.name.trim(), role: memberForm.role.trim(), session: memberForm.session.trim(), dept: memberForm.dept.trim() }
+            ? {
+                ...c,
+                name: memberForm.name.trim(),
+                role: memberForm.role.trim(),
+                session: memberForm.session.trim(),
+                dept: memberForm.dept.trim(),
+                photoUrl
+              }
             : c
         );
         triggerToast('Committee member updated and saved!');
@@ -355,7 +413,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           name: memberForm.name.trim(),
           role: memberForm.role.trim(),
           session: memberForm.session.trim() || 'Session 2021-22',
-          dept: memberForm.dept.trim() || 'CST'
+          dept: memberForm.dept.trim() || 'CST',
+          photoUrl
         };
         updatedCommittee = [...updatedCommittee, newMember];
         triggerToast('Committee member added and saved!');
@@ -376,7 +435,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         role: item.role,
         session: item.session,
         dept: item.dept || 'CST',
-        type: 'founders'
+        type: 'founders',
+        photoUrl: item.photoUrl || ''
       });
     } else {
       const item = clubData.committee.find((c) => c.id === id);
@@ -387,9 +447,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         role: item.role,
         session: item.session,
         dept: item.dept || 'CST',
-        type: 'committee'
+        type: 'committee',
+        photoUrl: item.photoUrl || ''
       });
     }
+    setMemberPhotoUrlInput('');
   };
 
   const handleDeleteMember = async (id: string, type: 'committee' | 'founders') => {
@@ -411,8 +473,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       role: '',
       session: 'Session 2021-22',
       dept: 'CST',
-      type: 'committee'
+      type: 'committee',
+      photoUrl: ''
     });
+    setMemberPhotoUrlInput('');
+    if (memberPhotoInputRef.current) memberPhotoInputRef.current.value = '';
   };
 
   // --- FB POST OPERATIONS ---
@@ -893,13 +958,27 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                           onChange={(e) => setGalleryForm({ ...galleryForm, title: e.target.value })}
                           className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium"
                         />
-                        <input
-                          type="text"
-                          placeholder="Event Date / Tag (e.g. Feb 2025)"
-                          value={galleryForm.date}
-                          onChange={(e) => setGalleryForm({ ...galleryForm, date: e.target.value })}
-                          className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium"
-                        />
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="date"
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                const d = new Date(e.target.value);
+                                const formatted = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                                setGalleryForm({ ...galleryForm, date: formatted });
+                              }
+                            }}
+                            className="border border-slate-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium shrink-0"
+                            title="Pick calendar date"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Event Date (e.g. 15 Feb 2025)"
+                            value={galleryForm.date}
+                            onChange={(e) => setGalleryForm({ ...galleryForm, date: e.target.value })}
+                            className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium"
+                          />
+                        </div>
                       </div>
 
                       <textarea
@@ -1126,68 +1205,175 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 <div className="space-y-6">
                   {/* Form */}
                   <form onSubmit={handleSaveMember} className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200">
-                    <h4 className="font-extrabold text-[#003366] text-sm mb-3">
-                      {memberForm.id ? 'Edit Member Information' : 'Add Member or Founder'}
+                    <h4 className="font-extrabold text-[#003366] text-sm mb-3 flex items-center justify-between">
+                      <span>{memberForm.id ? 'Edit Member Information' : 'Add Member or Founder'}</span>
+                      {memberForm.id && (
+                        <span className="text-[11px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">
+                          Editing existing record
+                        </span>
+                      )}
                     </h4>
 
-                    <div className="space-y-3 text-sm">
+                    <div className="space-y-3.5 text-sm">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <input
-                          type="text"
-                          required
-                          placeholder="Full Name (e.g. Sourov Saha)"
-                          value={memberForm.name}
-                          onChange={(e) => setMemberForm({ ...memberForm, name: e.target.value })}
-                          className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white"
-                        />
-                        <input
-                          type="text"
-                          required
-                          placeholder="Designation (e.g. President / Website Lead)"
-                          value={memberForm.role}
-                          onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })}
-                          className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white"
-                        />
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Full Name *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Full Name (e.g. Sourov Saha)"
+                            value={memberForm.name}
+                            onChange={(e) => setMemberForm({ ...memberForm, name: e.target.value })}
+                            className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium min-h-[44px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Designation / Role *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Designation (e.g. President / Website Lead)"
+                            value={memberForm.role}
+                            onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })}
+                            className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium min-h-[44px]"
+                          />
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <input
-                          type="text"
-                          placeholder="Session (e.g. Session 2021-22)"
-                          value={memberForm.session}
-                          onChange={(e) => setMemberForm({ ...memberForm, session: e.target.value })}
-                          className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Department (e.g. CST)"
-                          value={memberForm.dept}
-                          onChange={(e) => setMemberForm({ ...memberForm, dept: e.target.value })}
-                          className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white"
-                        />
-                        <select
-                          value={memberForm.type}
-                          onChange={(e) => setMemberForm({ ...memberForm, type: e.target.value as any })}
-                          className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white"
-                        >
-                          <option value="committee">Executive Committee</option>
-                          <option value="founders">Founder Panel</option>
-                        </select>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Session</label>
+                          <input
+                            type="text"
+                            placeholder="Session (e.g. Session 2021-22)"
+                            value={memberForm.session}
+                            onChange={(e) => setMemberForm({ ...memberForm, session: e.target.value })}
+                            className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium min-h-[44px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Department</label>
+                          <input
+                            type="text"
+                            placeholder="Department (e.g. CST)"
+                            value={memberForm.dept}
+                            onChange={(e) => setMemberForm({ ...memberForm, dept: e.target.value })}
+                            className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium min-h-[44px]"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Member Category</label>
+                          <select
+                            value={memberForm.type}
+                            onChange={(e) => setMemberForm({ ...memberForm, type: e.target.value as any })}
+                            className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-bold min-h-[44px]"
+                          >
+                            <option value="committee">Executive Committee</option>
+                            <option value="founders">Founder Panel</option>
+                          </select>
+                        </div>
                       </div>
 
-                      <div className="flex gap-2 pt-2">
+                      {/* Member Picture Upload & Preview */}
+                      <div className="border border-slate-200 bg-white rounded-xl p-3.5 space-y-3">
+                        <label className="block text-xs font-black text-black uppercase">
+                          Member Picture / Profile Photo
+                        </label>
+                        
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                          {/* Photo Preview Container */}
+                          <div className="relative w-20 h-20 rounded-xl border-2 border-black overflow-hidden bg-slate-100 flex items-center justify-center shrink-0 shadow-[2px_2px_0px_#000]">
+                            {memberForm.photoUrl ? (
+                              <img
+                                src={memberForm.photoUrl}
+                                alt="Member Preview"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="text-center text-slate-400">
+                                <Users className="w-8 h-8 mx-auto" />
+                                <span className="text-[9px] font-bold block">No Photo</span>
+                              </div>
+                            )}
+                            {isMemberPhotoCompressing && (
+                              <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                                <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Upload Buttons & Options */}
+                          <div className="flex-1 w-full space-y-2">
+                            <input
+                              ref={memberPhotoInputRef}
+                              type="file"
+                              accept="image/*"
+                              onChange={handleMemberPhotoFileSelect}
+                              className="hidden"
+                            />
+                            
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => memberPhotoInputRef.current?.click()}
+                                className="neo-btn bg-[#FFE600] text-black font-black text-xs px-3.5 py-2 rounded-lg flex items-center gap-1.5 cursor-pointer min-h-[40px]"
+                              >
+                                <UploadCloud className="w-4 h-4 stroke-[2.5]" />
+                                <span>{memberForm.photoUrl ? 'Change Photo' : 'Upload Picture'}</span>
+                              </button>
+
+                              {memberForm.photoUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() => setMemberForm({ ...memberForm, photoUrl: '' })}
+                                  className="neo-btn bg-white hover:bg-red-50 text-red-600 font-bold text-xs px-3 py-2 rounded-lg flex items-center gap-1 cursor-pointer min-h-[40px]"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Remove</span>
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Direct URL input for picture */}
+                            <div className="flex gap-2">
+                              <input
+                                type="url"
+                                placeholder="Or enter image URL (https://...)"
+                                value={memberPhotoUrlInput}
+                                onChange={(e) => setMemberPhotoUrlInput(e.target.value)}
+                                className="flex-1 border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-[#003366] focus:outline-none bg-slate-50 font-medium"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (memberPhotoUrlInput.trim()) {
+                                    setMemberForm({ ...memberForm, photoUrl: memberPhotoUrlInput.trim() });
+                                    setMemberPhotoUrlInput('');
+                                    triggerToast('Image URL applied to member!');
+                                  }
+                                }}
+                                className="neo-btn bg-white text-black font-bold text-xs px-3 py-1.5 rounded-lg shrink-0 cursor-pointer"
+                              >
+                                Apply URL
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 pt-2">
                         <button
                           type="submit"
-                          className="bg-[#003366] hover:bg-slate-800 text-[#F5B012] px-5 py-2 rounded-xl font-bold text-xs transition shadow flex items-center gap-1.5 cursor-pointer"
+                          className="neo-btn bg-[#003366] text-[#FFE600] px-5 py-2.5 rounded-xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
                         >
-                          <Save className="w-3.5 h-3.5" />
+                          <Save className="w-4 h-4 stroke-[2.5]" />
                           <span>{memberForm.id ? 'Save Member Info' : 'Add Member Permanently'}</span>
                         </button>
                         {memberForm.id && (
                           <button
                             type="button"
                             onClick={handleResetMemberForm}
-                            className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-xl font-bold text-xs transition cursor-pointer"
+                            className="neo-btn bg-slate-200 text-slate-800 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm cursor-pointer min-h-[44px]"
                           >
                             Cancel
                           </button>
@@ -1201,29 +1387,45 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     <h4 className="font-extrabold text-slate-700 text-xs uppercase tracking-wider mb-2">
                       Current Executive Committee ({clubData.committee.length})
                     </h4>
-                    <div className="space-y-2 mb-4">
+                    <div className="space-y-2 mb-6">
                       {clubData.committee.map((m) => (
                         <div
                           key={m.id}
-                          className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-slate-200 text-xs"
+                          className="flex items-center justify-between p-2.5 sm:p-3 bg-white rounded-xl border-2 border-slate-200 hover:border-black text-xs transition"
                         >
-                          <div className="truncate pr-2">
-                            <span className="font-bold text-slate-800 text-sm">{m.name}</span>
-                            <span className="text-slate-500 ml-2 font-medium">({m.role})</span>
-                            <span className="text-slate-400 block text-[11px]">{m.session} • {m.dept}</span>
+                          <div className="flex items-center gap-3 min-w-0 pr-2">
+                            {/* Member Avatar Thumbnail */}
+                            <div className="w-12 h-12 rounded-xl border-2 border-black overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center shadow-[1.5px_1.5px_0px_#000]">
+                              {m.photoUrl ? (
+                                <img
+                                  src={m.photoUrl}
+                                  alt={m.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <i className="fa-solid fa-user-tie text-slate-600 text-lg"></i>
+                              )}
+                            </div>
+                            <div className="truncate">
+                              <span className="font-black text-black text-sm block truncate">{m.name}</span>
+                              <span className="text-slate-600 font-bold block truncate">{m.role}</span>
+                              <span className="text-slate-400 block text-[11px] truncate">{m.session} • {m.dept || 'CST'}</span>
+                            </div>
                           </div>
                           <div className="flex gap-1.5 shrink-0">
                             <button
                               onClick={() => handleEditMember(m.id, 'committee')}
-                              className="p-1.5 bg-blue-50 text-blue-600 rounded-lg font-bold hover:bg-blue-100"
+                              className="neo-btn p-2 bg-blue-50 text-blue-700 rounded-lg font-bold min-w-[38px] min-h-[38px] flex items-center justify-center cursor-pointer"
+                              title="Edit Member"
                             >
-                              <Edit3 className="w-3 h-3" />
+                              <Edit3 className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteMember(m.id, 'committee')}
-                              className="p-1.5 bg-red-50 text-red-600 rounded-lg font-bold hover:bg-red-100"
+                              className="neo-btn p-2 bg-red-50 text-red-600 rounded-lg font-bold min-w-[38px] min-h-[38px] flex items-center justify-center cursor-pointer"
+                              title="Delete Member"
                             >
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
@@ -1237,25 +1439,41 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                       {clubData.founders.map((f) => (
                         <div
                           key={f.id}
-                          className="flex items-center justify-between p-2.5 bg-amber-50/50 rounded-xl border border-amber-200 text-xs"
+                          className="flex items-center justify-between p-2.5 sm:p-3 bg-[#FFFBEB] rounded-xl border-2 border-amber-300 hover:border-black text-xs transition"
                         >
-                          <div className="truncate pr-2">
-                            <span className="font-bold text-amber-950 text-sm">{f.name}</span>
-                            <span className="text-amber-800 ml-2 font-semibold">({f.role})</span>
-                            <span className="text-slate-500 block text-[11px]">{f.session}</span>
+                          <div className="flex items-center gap-3 min-w-0 pr-2">
+                            {/* Founder Avatar Thumbnail */}
+                            <div className="w-12 h-12 rounded-xl border-2 border-black overflow-hidden bg-[#FFE600] shrink-0 flex items-center justify-center shadow-[1.5px_1.5px_0px_#000]">
+                              {f.photoUrl ? (
+                                <img
+                                  src={f.photoUrl}
+                                  alt={f.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <i className={`fa-solid ${f.icon || 'fa-users-gear'} text-black text-lg`}></i>
+                              )}
+                            </div>
+                            <div className="truncate">
+                              <span className="font-black text-black text-sm block truncate">{f.name}</span>
+                              <span className="text-amber-900 font-bold block truncate">{f.role}</span>
+                              <span className="text-slate-500 block text-[11px] truncate">{f.session} • {f.dept || 'CST'}</span>
+                            </div>
                           </div>
                           <div className="flex gap-1.5 shrink-0">
                             <button
                               onClick={() => handleEditMember(f.id, 'founders')}
-                              className="p-1.5 bg-blue-50 text-blue-600 rounded-lg font-bold hover:bg-blue-100"
+                              className="neo-btn p-2 bg-blue-50 text-blue-700 rounded-lg font-bold min-w-[38px] min-h-[38px] flex items-center justify-center cursor-pointer"
+                              title="Edit Founder"
                             >
-                              <Edit3 className="w-3 h-3" />
+                              <Edit3 className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteMember(f.id, 'founders')}
-                              className="p-1.5 bg-red-50 text-red-600 rounded-lg font-bold hover:bg-red-100"
+                              className="neo-btn p-2 bg-red-50 text-red-600 rounded-lg font-bold min-w-[38px] min-h-[38px] flex items-center justify-center cursor-pointer"
+                              title="Delete Founder"
                             >
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>

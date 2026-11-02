@@ -29,11 +29,29 @@ export const CommitteeSection: React.FC<CommitteeSectionProps> = ({ committee })
             key={member.id}
             className="neo-card bg-white p-6 rounded-xl text-center group"
           >
-            <div className="w-16 h-16 bg-[#FFFDF7] text-black rounded-xl flex items-center justify-center text-2xl mx-auto mb-4 border-2 border-black shadow-[3px_3px_0px_#000] group-hover:bg-[#FFE600] transition-colors duration-150">
-              <i className="fa-solid fa-user-tie"></i>
+            {/* Avatar Photo Frame or Tie Icon */}
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4">
+              {member.photoUrl ? (
+                <div className="w-full h-full rounded-2xl border-[2.5px] border-black bg-white overflow-hidden shadow-[4px_4px_0px_#000] group-hover:shadow-[5px_5px_0px_#FFE600] group-hover:-translate-y-1 transition-all duration-200">
+                  <img
+                    src={member.photoUrl}
+                    alt={member.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80';
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-full bg-[#FFFDF7] text-black rounded-2xl flex items-center justify-center text-2xl sm:text-3xl border-[2.5px] border-black shadow-[4px_4px_0px_#000] group-hover:bg-[#FFE600] group-hover:-translate-y-1 transition-all duration-200">
+                  <i className="fa-solid fa-user-tie"></i>
+                </div>
+              )}
+              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#10B981] border-2 border-black rounded-full shadow-[1px_1px_0px_#000]" title="Active Executive"></span>
             </div>
 
-            <h4 className="font-black text-black text-lg mb-1 group-hover:text-[#003366] transition-colors">
+            <h4 className="font-black text-black text-lg sm:text-xl mb-1 group-hover:text-[#003366] transition-colors leading-snug">
               {member.name}
             </h4>
             <p className="text-slate-700 text-xs sm:text-sm font-bold mb-3">

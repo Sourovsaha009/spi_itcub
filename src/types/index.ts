@@ -22,6 +22,8 @@ export interface GalleryItem {
   images?: string[];
   desc: string;
   date?: string;
+  dateIso?: string;
+  createdAt?: number;
 }
 
 export interface FounderItem {
@@ -31,6 +33,7 @@ export interface FounderItem {
   session: string;
   dept?: string;
   icon?: string;
+  photoUrl?: string;
 }
 
 export interface CommitteeMember {
@@ -39,6 +42,7 @@ export interface CommitteeMember {
   role: string;
   session: string;
   dept?: string;
+  photoUrl?: string;
 }
 
 export interface FbPostItem {

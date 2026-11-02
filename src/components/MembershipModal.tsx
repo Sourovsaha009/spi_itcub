@@ -67,12 +67,12 @@ export const MembershipModal: React.FC<MembershipModalProps> = ({ isOpen, onClos
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="neo-box-lg bg-[#FFFDF7] rounded-2xl max-w-xl w-full p-6 sm:p-8 relative my-8 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+      <div className="neo-box-lg bg-[#FFFDF7] rounded-2xl max-w-xl w-full p-5 sm:p-8 relative my-auto max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
         
         <button
           onClick={handleReset}
-          className="neo-btn absolute top-5 right-5 bg-white text-black p-1.5 rounded-lg cursor-pointer"
+          className="neo-btn absolute top-4 sm:top-5 right-4 sm:right-5 bg-white text-black w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl cursor-pointer shadow-[2px_2px_0px_#000] z-20"
           aria-label="Close"
         >
           <X className="w-5 h-5 stroke-[2.5]" />
@@ -248,7 +248,7 @@ export const MembershipModal: React.FC<MembershipModalProps> = ({ isOpen, onClos
               <button
                 type="submit"
                 disabled={loading}
-                className="neo-btn w-full bg-[#FFE600] text-black font-black py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer mt-2"
+                className="neo-btn w-full min-h-[48px] bg-[#FFE600] text-black font-black py-3 px-6 rounded-xl flex items-center justify-center gap-2 cursor-pointer mt-3 text-sm sm:text-base shadow-[3px_3px_0px_#000]"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">

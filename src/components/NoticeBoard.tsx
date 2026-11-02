@@ -91,7 +91,7 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ notices }) => {
 
                   <button
                     onClick={() => handleCopy(notice)}
-                    className="neo-btn bg-white hover:bg-[#FFE600] text-black p-2 rounded-lg cursor-pointer transition-colors"
+                    className="neo-btn bg-white hover:bg-[#FFE600] text-black w-10 h-10 flex items-center justify-center rounded-lg cursor-pointer transition-colors shadow-[2px_2px_0px_#000]"
                     title="Copy notice details"
                   >
                     {copiedId === notice.id ? (

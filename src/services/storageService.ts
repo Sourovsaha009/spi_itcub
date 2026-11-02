@@ -43,7 +43,9 @@ export const defaultClubData: ClubData = {
         "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=800&q=80"
       ],
       desc: "Official launching ceremony of SPI IT Club with faculty members and CST department students.",
-      date: "Feb 2025"
+      date: "15 Feb 2025",
+      dateIso: "2025-02-15",
+      createdAt: 1739577600000
     },
     {
       id: "2",
@@ -55,7 +57,9 @@ export const defaultClubData: ClubData = {
         "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80"
       ],
       desc: "Interactive coding workshop held at the computer lab for CST students.",
-      date: "Feb 2025"
+      date: "10 Feb 2025",
+      dateIso: "2025-02-10",
+      createdAt: 1739145600000
     },
     {
       id: "3",
@@ -66,7 +70,9 @@ export const defaultClubData: ClubData = {
         "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=800&q=80"
       ],
       desc: "Strategic planning meeting for upcoming technical competitions and bootcamps.",
-      date: "Jan 2025"
+      date: "20 Jan 2025",
+      dateIso: "2025-01-20",
+      createdAt: 1737331200000
     }
   ],
   founders: [
@@ -131,82 +137,77 @@ export function getInitialSyncCache(): ClubData {
 
 import { loadFromFirestore, saveToFirestore } from './firebase';
 
-// Load data from multi-tier stores: Firebase Firestore (Cloud) -> IndexedDB -> LocalStorage -> Server API
+// Load data from multi-tier stores: Server Disk API -> Cloud Firestore -> IndexedDB -> LocalStorage
 export async function loadClubData(): Promise<ClubData> {
-  let localCandidate: ClubData | null = null;
+  const candidates: { source: string; data: ClubData; time: number }[] = [];
 
   // 1. Check IndexedDB (Primary persistent browser database, unlimited size)
   try {
     const idbData = await readFromIndexedDB();
     if (idbData && Array.isArray(idbData.notices)) {
-      localCandidate = idbData;
+      candidates.push({ source: 'idb', data: idbData, time: idbData.updatedAt || 0 });
     }
   } catch (e) {
-    console.warn('IndexedDB read error:', e);
+    console.warn('[Storage] IndexedDB read error:', e);
   }
 
-  // 2. Check LocalStorage fallback if IndexedDB had nothing
-  if (!localCandidate) {
-    localCandidate = getInitialSyncCache();
+  // 2. Check LocalStorage fallback
+  const lsData = getInitialSyncCache();
+  if (lsData && Array.isArray(lsData.notices) && lsData !== defaultClubData) {
+    candidates.push({ source: 'ls', data: lsData, time: lsData.updatedAt || 0 });
   }
 
-  const localTime = localCandidate?.updatedAt || 0;
-
-  // 3. Try to sync with Cloud Firestore (Universal Cloud Database)
-  try {
-    const cloudData = await loadFromFirestore();
-    if (cloudData && Array.isArray(cloudData.notices)) {
-      const cloudTime = cloudData.updatedAt || 0;
-      if (cloudTime >= localTime) {
-        await writeToIndexedDB(cloudData);
-        safeSetLocalStorage(cloudData);
-        return cloudData;
-      } else if (localCandidate) {
-        // Push newer local edits to cloud
-        saveToFirestore(localCandidate).catch(() => {});
-        return localCandidate;
-      }
-    }
-  } catch (err) {
-    console.info('Cloud Firestore not reachable yet, using local store:', err);
-  }
-
-  // 4. Try to sync with Server Disk API (/api/club-data)
+  // 3. Try to sync with Server Disk API (/api/club-data)
   try {
     const res = await fetch('/api/club-data', { cache: 'no-store' });
     const contentType = res.headers.get('content-type');
     if (res.ok && contentType && contentType.includes('application/json')) {
       const serverData = await res.json();
       if (serverData && Array.isArray(serverData.notices)) {
-        const serverTime = serverData.updatedAt || 0;
-
-        if (serverTime > localTime) {
-          await writeToIndexedDB(serverData);
-          safeSetLocalStorage(serverData);
-          return serverData;
-        } else if (localTime > serverTime && localCandidate) {
-          fetch('/api/club-data', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(localCandidate)
-          }).catch(() => {});
-          return localCandidate;
-        } else {
-          return localCandidate || serverData;
-        }
+        candidates.push({ source: 'server', data: serverData, time: serverData.updatedAt || 0 });
       }
     }
   } catch (err) {
-    console.info('Server API unreachable, using local persistent database:', err);
+    console.info('[Storage] Server API unreachable:', err);
   }
 
-  const finalResult = localCandidate && localCandidate !== defaultClubData
-    ? ensureDefaults(localCandidate)
-    : defaultClubData;
+  // 4. Try to sync with Cloud Firestore (Universal Cloud Database)
+  try {
+    const cloudData = await loadFromFirestore();
+    if (cloudData && Array.isArray(cloudData.notices)) {
+      candidates.push({ source: 'cloud', data: cloudData, time: cloudData.updatedAt || 0 });
+    }
+  } catch (err) {
+    console.info('[Storage] Cloud Firestore not reachable yet:', err);
+  }
 
-  // Sync to stores
-  await writeToIndexedDB(finalResult);
+  // Sort candidates by newest timestamp first. If timestamps are tied, prioritize candidate with more gallery images.
+  candidates.sort((a, b) => {
+    if (b.time !== a.time) return b.time - a.time;
+    const bImagesCount = (b.data.gallery || []).reduce((acc, g) => acc + (g.images?.length || (g.url ? 1 : 0)), 0);
+    const aImagesCount = (a.data.gallery || []).reduce((acc, g) => acc + (g.images?.length || (g.url ? 1 : 0)), 0);
+    return bImagesCount - aImagesCount;
+  });
+
+  const bestData = candidates.length > 0 ? candidates[0].data : defaultClubData;
+  const finalResult = ensureDefaults(bestData);
+
+  // Sync the latest winning state to all other stores so everything stays consistent
+  writeToIndexedDB(finalResult).catch(() => {});
   safeSetLocalStorage(finalResult);
+
+  // If server disk or cloud firestore are behind, push latest state to them
+  if (candidates.length > 0 && candidates[0].source !== 'server') {
+    fetch('/api/club-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(finalResult)
+    }).catch(() => {});
+  }
+  if (candidates.length > 0 && candidates[0].source !== 'cloud') {
+    saveToFirestore(finalResult).catch(() => {});
+  }
+
   return finalResult;
 }
 
@@ -224,38 +225,69 @@ function ensureDefaults(data: ClubData): ClubData {
   return data;
 }
 
-// Save data to all stores: Cloud Firestore + IndexedDB + LocalStorage + Server Disk API
+// Save data to all stores: Server Disk API + Cloud Firestore + IndexedDB + LocalStorage
 export async function persistClubData(newData: ClubData): Promise<boolean> {
   const stampedData: ClubData = {
     ...newData,
     updatedAt: Date.now()
   };
 
-  // 1. Write to Cloud Firestore (Universal cloud persistence across all users and devices)
-  const cloudPromise = saveToFirestore(stampedData);
+  // 1. Write to IndexedDB immediately (unlimited storage in browser)
+  const idbPromise = writeToIndexedDB(stampedData);
 
-  // 2. Write to IndexedDB (reliable local database, handles large images without quota limits)
-  const idbOk = await writeToIndexedDB(stampedData);
-
-  // 3. Write to LocalStorage (fast synchronous reload cache)
+  // 2. Write to LocalStorage (fast reload cache)
   safeSetLocalStorage(stampedData);
 
-  // 4. Push to Server API if hosted on Node/Express
+  // 3. Write to Server Disk API (/api/club-data) - Await to guarantee permanent file write
+  let serverOk = false;
   try {
-    fetch('/api/club-data', {
+    const res = await fetch('/api/club-data', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(stampedData)
-    }).catch(() => {});
-  } catch (err) {}
+    });
+    if (res.ok) {
+      serverOk = true;
+    }
+  } catch (err) {
+    console.warn('[Storage] Server disk save error:', err);
+  }
+
+  // 4. Write to Cloud Firestore
+  const cloudOk = await saveToFirestore(stampedData);
+  const idbOk = await idbPromise;
 
   // Dispatch global window event so any open component/tab updates immediately
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('spi_club_data_changed', { detail: stampedData }));
   }
 
-  const cloudOk = await cloudPromise;
-  return cloudOk || idbOk;
+  return serverOk || cloudOk || idbOk;
+}
+
+// Upload image directly to server disk for permanent, lightweight URL storage
+export async function uploadImageToServer(file: File): Promise<string> {
+  // Compress to reasonable dimensions and quality (under 250KB)
+  const base64 = await compressImageFile(file, 900, 0.75);
+
+  try {
+    const res = await fetch('/api/upload-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64: base64, filename: file.name })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.url) {
+        return data.url; // e.g. "/uploads/img_1739....jpg"
+      }
+    }
+  } catch (err) {
+    console.warn('[Upload] Failed to save image to server disk, falling back to base64:', err);
+  }
+
+  // Fallback to compressed base64 if server upload endpoint fails
+  return base64;
 }
 
 // Reset data to defaults

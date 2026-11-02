@@ -64,14 +64,14 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ courses, onOpenJ
 
               <button
                 onClick={onOpenJoin}
-                className="mt-auto pt-3 border-t-2 border-black text-xs font-black text-black group-hover:text-[#003366] flex items-center justify-between w-full transition-colors cursor-pointer"
+                className="mt-auto pt-3 border-t-2 border-black text-xs font-black text-black group-hover:text-[#003366] flex items-center justify-between w-full transition-colors cursor-pointer min-h-[44px]"
               >
                 <span className="flex items-center gap-1.5 font-mono uppercase tracking-wider">
                   <BookOpen className="w-4 h-4 stroke-[2.5] group-hover:scale-110 transition-transform" />
                   <span>Enroll in track</span>
                 </span>
-                <span className="w-6 h-6 rounded border-2 border-black bg-[#FFE600] flex items-center justify-center shadow-[1.5px_1.5px_0px_#000] group-hover:translate-x-1.5 group-hover:bg-[#10B981] group-hover:text-white transition-all duration-150">
-                  <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
+                <span className="w-7 h-7 rounded border-2 border-black bg-[#FFE600] flex items-center justify-center shadow-[1.5px_1.5px_0px_#000] group-hover:translate-x-1.5 group-hover:bg-[#10B981] group-hover:text-white transition-all duration-150 shrink-0">
+                  <ArrowRight className="w-4 h-4 stroke-[3]" />
                 </span>
               </button>
             </div>

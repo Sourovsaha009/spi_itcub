@@ -29,9 +29,25 @@ export const FoundersSection: React.FC<FoundersSectionProps> = ({ founders }) =>
             key={founder.id}
             className="neo-card bg-[#003366] text-white p-8 rounded-2xl text-center relative overflow-hidden group"
           >
-            {/* Top decorative badge */}
-            <div className="w-20 h-20 bg-[#FFE600] border-2 border-black text-black rounded-2xl flex items-center justify-center text-3xl mx-auto mb-5 shadow-[4px_4px_0px_0px_#000] group-hover:-translate-y-1 transition-transform duration-150">
-              <i className={`fa-solid ${founder.icon || 'fa-users-gear'}`}></i>
+            {/* Photo Avatar or Icon */}
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-5">
+              {founder.photoUrl ? (
+                <div className="w-full h-full rounded-2xl border-[3px] border-black bg-white overflow-hidden shadow-[5px_5px_0px_0px_#FFE600] group-hover:-translate-y-1 transition-all duration-200">
+                  <img
+                    src={founder.photoUrl}
+                    alt={founder.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80';
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-full bg-[#FFE600] border-[3px] border-black text-black rounded-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-[5px_5px_0px_0px_#000] group-hover:-translate-y-1 transition-transform duration-150">
+                  <i className={`fa-solid ${founder.icon || 'fa-users-gear'}`}></i>
+                </div>
+              )}
             </div>
 
             <h3 className="font-black text-2xl text-white mb-1.5 tracking-tight">

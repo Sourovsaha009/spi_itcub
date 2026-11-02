@@ -66,7 +66,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenJoin }) => {
 
             <button
               onClick={onOpenJoin}
-              className="neo-btn bg-[#FFE600] hover:bg-[#10B981] text-black font-black px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 cursor-pointer shadow-[3px_3px_0px_#000] transition-colors"
+              className="neo-btn bg-[#FFE600] hover:bg-[#10B981] text-black font-black px-6 py-2.5 rounded-xl text-sm min-h-[44px] flex items-center gap-2 cursor-pointer shadow-[3px_3px_0px_#000] transition-colors"
             >
               <UserPlus className="w-4 h-4 stroke-[2.5]" />
               <span>Join Club</span>
@@ -77,14 +77,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenJoin }) => {
           <div className="lg:hidden flex items-center gap-2">
             <button
               onClick={onOpenJoin}
-              className="neo-btn bg-[#FFE600] text-black p-2 rounded-lg font-black text-xs"
+              className="neo-btn bg-[#FFE600] text-black h-11 px-3.5 rounded-xl font-black text-xs flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_#000]"
               title="Join Club"
             >
               <UserPlus className="w-4 h-4 stroke-[2.5]" />
+              <span>Join</span>
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="neo-btn bg-white text-black p-2 rounded-lg focus:outline-none"
+              className="neo-btn bg-white text-black w-11 h-11 rounded-xl flex items-center justify-center cursor-pointer focus:outline-none shadow-[2px_2px_0px_#000]"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5 stroke-[2.5]" /> : <Menu className="w-5 h-5 stroke-[2.5]" />}

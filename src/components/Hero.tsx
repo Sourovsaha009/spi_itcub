@@ -122,11 +122,11 @@ export const Hero: React.FC<HeroProps> = ({ onOpenJoin, facebookUrl = "https://w
             </p>
           </div>
 
-          {/* Action Buttons with Fluid Micro-Interactions */}
-          <div className="flex flex-wrap justify-center items-center gap-4">
+          {/* Action Buttons with Balanced Sizing for PC & Mobile */}
+          <div className="flex flex-col sm:flex-row flex-wrap justify-center items-center gap-3 sm:gap-4 max-w-2xl sm:max-w-none mx-auto">
             <button
               onClick={onOpenJoin}
-              className="neo-btn bg-[#FFE600] text-black font-black px-6 py-3.5 rounded-xl flex items-center gap-2 cursor-pointer text-sm sm:text-base group"
+              className="neo-btn w-full sm:w-auto min-h-[48px] bg-[#FFE600] text-black font-black px-6 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base group"
             >
               <UserPlus className="w-5 h-5 stroke-[2.5]" />
               <span>Apply For Membership</span>
@@ -137,7 +137,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenJoin, facebookUrl = "https://w
               href={facebookUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="neo-btn bg-[#2563EB] text-white font-black px-6 py-3.5 rounded-xl flex items-center gap-2 text-sm sm:text-base group"
+              className="neo-btn w-full sm:w-auto min-h-[48px] bg-[#2563EB] text-white font-black px-6 py-3 rounded-xl flex items-center justify-center gap-2 text-sm sm:text-base group"
             >
               <Facebook className="w-5 h-5 fill-current group-hover:scale-110 transition-transform duration-150" />
               <span>Visit Facebook Page</span>
@@ -145,7 +145,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenJoin, facebookUrl = "https://w
 
             <a
               href="#courses"
-              className="neo-btn bg-white text-black font-black px-6 py-3.5 rounded-xl flex items-center gap-2 text-sm sm:text-base group"
+              className="neo-btn w-full sm:w-auto min-h-[48px] bg-white text-black font-black px-6 py-3 rounded-xl flex items-center justify-center gap-2 text-sm sm:text-base group"
             >
               <Terminal className="w-5 h-5 text-[#003366] stroke-[2.5] group-hover:rotate-12 transition-transform duration-150" />
               <span>Explore Courses</span>
@@ -153,22 +153,22 @@ export const Hero: React.FC<HeroProps> = ({ onOpenJoin, facebookUrl = "https://w
           </div>
 
           {/* Neo-Brutalist Stats Strip with Hover Elevation */}
-          <div className="mt-12 pt-8 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto text-center">
-            <div className="neo-box bg-white text-black p-4 rounded-xl group hover:-translate-y-1 transition-all duration-150">
+          <div className="mt-10 sm:mt-12 pt-6 sm:pt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto text-center">
+            <div className="neo-box bg-white text-black p-3.5 sm:p-4 rounded-xl group hover:-translate-y-1 transition-all duration-150">
               <div className="text-2xl sm:text-3xl font-black text-[#003366] group-hover:scale-105 transition-transform">2025</div>
-              <div className="text-xs font-black uppercase text-slate-600 mt-1">Established</div>
+              <div className="text-[11px] sm:text-xs font-black uppercase text-slate-600 mt-1">Established</div>
             </div>
-            <div className="neo-box bg-[#FFE600] text-black p-4 rounded-xl group hover:-translate-y-1 transition-all duration-150">
-              <div className="text-2xl sm:text-3xl font-black text-black group-hover:scale-105 transition-transform">7+</div>
-              <div className="text-xs font-black uppercase text-slate-800 mt-1">Tech Domains</div>
+            <div className="neo-box bg-[#FFE600] text-black p-3.5 sm:p-4 rounded-xl group hover:-translate-y-1 transition-all duration-150">
+              <div className="text-2xl sm:text-3xl font-black text-black group-hover:scale-105 transition-transform">9+</div>
+              <div className="text-[11px] sm:text-xs font-black uppercase text-slate-800 mt-1">Tech Domains</div>
             </div>
-            <div className="neo-box bg-white text-black p-4 rounded-xl group hover:-translate-y-1 transition-all duration-150">
+            <div className="neo-box bg-white text-black p-3.5 sm:p-4 rounded-xl group hover:-translate-y-1 transition-all duration-150">
               <div className="text-2xl sm:text-3xl font-black text-[#10B981] group-hover:scale-105 transition-transform">100%</div>
-              <div className="text-xs font-black uppercase text-slate-600 mt-1">Practical Hands-on</div>
+              <div className="text-[11px] sm:text-xs font-black uppercase text-slate-600 mt-1">Hands-on Practice</div>
             </div>
-            <div className="neo-box bg-[#10B981] text-black p-4 rounded-xl group hover:-translate-y-1 transition-all duration-150">
+            <div className="neo-box bg-[#10B981] text-black p-3.5 sm:p-4 rounded-xl group hover:-translate-y-1 transition-all duration-150">
               <div className="text-2xl sm:text-3xl font-black text-black group-hover:scale-105 transition-transform">CST</div>
-              <div className="text-xs font-black uppercase text-black mt-1">Student Led</div>
+              <div className="text-[11px] sm:text-xs font-black uppercase text-black mt-1">Student Led</div>
             </div>
           </div>
 

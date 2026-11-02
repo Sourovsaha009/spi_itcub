@@ -8,6 +8,11 @@ const __dirname = path.dirname(__filename);
 
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'club_data.json');
+const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
+
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
 // Default initial club data
 const defaultData = {
@@ -130,6 +135,50 @@ async function startServer() {
   // Support large uploads (base64 image strings from canvas)
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+  // Serve uploaded images statically
+  app.use('/uploads', express.static(UPLOADS_DIR));
+
+  // Upload and persist image to server disk
+  app.post('/api/upload-image', (req, res) => {
+    try {
+      const { imageBase64 } = req.body;
+      if (!imageBase64) {
+        return res.status(400).json({ success: false, error: 'No image provided' });
+      }
+
+      if (!fs.existsSync(UPLOADS_DIR)) {
+        fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+      }
+
+      let extension = 'jpg';
+      let cleanBase64 = imageBase64;
+
+      if (imageBase64.includes(';base64,')) {
+        const parts = imageBase64.split(';base64,');
+        const header = parts[0];
+        cleanBase64 = parts[1];
+        if (header.includes('png')) extension = 'png';
+        else if (header.includes('webp')) extension = 'webp';
+        else if (header.includes('gif')) extension = 'gif';
+        else if (header.includes('svg')) extension = 'svg';
+      }
+
+      const safeFilename = `img_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${extension}`;
+      const filePath = path.join(UPLOADS_DIR, safeFilename);
+
+      const buffer = Buffer.from(cleanBase64, 'base64');
+      fs.writeFileSync(filePath, buffer);
+
+      const publicUrl = `/uploads/${safeFilename}`;
+      console.log(`[Upload API] Image saved permanently to disk: ${safeFilename} (${(buffer.length / 1024).toFixed(1)} KB) -> ${publicUrl}`);
+
+      res.json({ success: true, url: publicUrl });
+    } catch (err: any) {
+      console.error('[Upload API] Error saving uploaded image:', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
 
   // API Endpoints for permanent persistence
   app.get('/api/health', (req, res) => {

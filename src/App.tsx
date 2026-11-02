@@ -61,7 +61,15 @@ export default function App() {
     // Live cloud listener: real-time updates when any admin updates data
     const unsubscribeCloud = subscribeToFirestore((cloudData) => {
       if (cloudData && Array.isArray(cloudData.notices)) {
-        setClubData(cloudData);
+        setClubData((prev) => {
+          const currentTimestamp = prev?.updatedAt || 0;
+          const cloudTimestamp = cloudData.updatedAt || 0;
+          // Guard: Only apply cloud snapshot if it is strictly NEWER than local state!
+          if (cloudTimestamp > currentTimestamp) {
+            return cloudData;
+          }
+          return prev;
+        });
       }
     });
 

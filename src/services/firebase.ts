@@ -20,6 +20,7 @@ export const db = getFirestore(app);
 
 // Collection / Document path for the SPI IT Club official state
 const CLUB_DOC_REF = doc(db, 'club_content', 'main_data');
+const GALLERY_DOC_REF = doc(db, 'club_content', 'gallery_data');
 
 /**
  * Fetch latest club data from Cloud Firestore
@@ -27,29 +28,71 @@ const CLUB_DOC_REF = doc(db, 'club_content', 'main_data');
 export async function loadFromFirestore(): Promise<ClubData | null> {
   try {
     const snap = await getDoc(CLUB_DOC_REF);
-    if (snap.exists()) {
-      const data = snap.data() as ClubData;
-      return data;
+    if (!snap.exists()) {
+      return null;
     }
-    return null;
+
+    const data = snap.data() as ClubData;
+
+    // Check if gallery was stored separately due to size
+    try {
+      const gallerySnap = await getDoc(GALLERY_DOC_REF);
+      if (gallerySnap.exists()) {
+        const galleryPayload = gallerySnap.data();
+        if (galleryPayload && Array.isArray(galleryPayload.gallery) && galleryPayload.gallery.length > 0) {
+          data.gallery = galleryPayload.gallery;
+        }
+      }
+    } catch {}
+
+    return data;
   } catch (err: any) {
-    console.warn('Firestore load error (check if Firestore Database is created in console):', err);
+    console.warn('[Firestore] Load error (verify Firestore is created in test mode in Firebase Console):', err?.message || err);
     return null;
   }
 }
 
 /**
- * Save club data to Cloud Firestore (Real-time Cloud Database)
+ * Save club data to Cloud Firestore with safe document size handling (1MB limit protection)
  */
 export async function saveToFirestore(data: ClubData): Promise<boolean> {
   try {
-    await setDoc(CLUB_DOC_REF, {
+    const timestamp = data.updatedAt || Date.now();
+    const payload = {
       ...data,
-      updatedAt: Date.now()
-    }, { merge: true });
-    return true;
+      updatedAt: timestamp
+    };
+
+    // Calculate approximate size in bytes
+    const str = JSON.stringify(payload);
+    const sizeInBytes = new Blob([str]).size;
+
+    if (sizeInBytes < 900000) {
+      // Safe to write as a single document
+      await setDoc(CLUB_DOC_REF, payload, { merge: true });
+      return true;
+    } else {
+      // Size exceeds or is close to 1MB Firestore limit.
+      // Separate the gallery images into GALLERY_DOC_REF to stay safely within limits
+      console.info(`[Firestore] Data size ${(sizeInBytes / 1024).toFixed(1)} KB exceeds single doc threshold. Splitting gallery...`);
+      
+      const mainPayload = {
+        ...payload,
+        gallery: (payload.gallery || []).map((g) => ({
+          ...g,
+          // Keep thumbnail / url, trim redundant base64 arrays if needed
+          images: (g.images || [g.url]).slice(0, 4)
+        }))
+      };
+
+      await Promise.all([
+        setDoc(CLUB_DOC_REF, mainPayload, { merge: true }),
+        setDoc(GALLERY_DOC_REF, { gallery: payload.gallery, updatedAt: timestamp }, { merge: true })
+      ]);
+      return true;
+    }
   } catch (err: any) {
-    console.warn('Firestore save error (make sure Firestore Database is created in test mode):', err);
+    console.warn('[Firestore] Save error:', err?.message || err);
     return false;
   }
 }
@@ -65,11 +108,11 @@ export function subscribeToFirestore(onData: (data: ClubData) => void): () => vo
         onData(data);
       }
     }, (err) => {
-      console.warn('Firestore real-time subscription error:', err);
+      console.warn('[Firestore] Real-time subscription error:', err?.message || err);
     });
     return unsubscribe;
-  } catch (err) {
-    console.warn('Firestore listener setup failed:', err);
+  } catch (err: any) {
+    console.warn('[Firestore] Listener setup failed:', err?.message || err);
     return () => {};
   }
 }

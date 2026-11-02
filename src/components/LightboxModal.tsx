@@ -67,7 +67,7 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ photo, onClose }) 
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="neo-btn absolute top-4 right-4 z-20 bg-[#FFE600] text-black p-2 rounded-xl cursor-pointer"
+          className="neo-btn absolute top-3 sm:top-4 right-3 sm:right-4 z-20 bg-[#FFE600] text-black w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl cursor-pointer shadow-[2px_2px_0px_#000]"
           title="Close (Esc)"
         >
           <X className="w-5 h-5 sm:w-6 sm:h-6 stroke-[3]" />
@@ -75,13 +75,13 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ photo, onClose }) 
 
         {/* Counter Badge if multiple images */}
         {hasMultiple && (
-          <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
-            <span className="neo-badge bg-black text-[#FFE600] text-xs font-mono font-black flex items-center gap-1.5 shadow-[2px_2px_0px_#FFE600]">
+          <div className="absolute top-3 sm:top-4 left-3 sm:left-4 z-20 flex items-center gap-2">
+            <span className="neo-badge bg-black text-[#FFE600] text-[11px] sm:text-xs font-mono font-black flex items-center gap-1.5 shadow-[2px_2px_0px_#FFE600]">
               <Layers className="w-3.5 h-3.5" />
-              <span>{currentIndex + 1} / {images.length} PHOTOS</span>
+              <span>{currentIndex + 1} / {images.length}</span>
             </span>
             {isCover && (
-              <span className="neo-badge bg-[#FFE600] text-black text-[11px] font-black flex items-center gap-1">
+              <span className="neo-badge bg-[#FFE600] text-black text-[10px] sm:text-[11px] font-black flex items-center gap-1">
                 <Star className="w-3 h-3 fill-black text-black" />
                 <span>COVER</span>
               </span>
@@ -101,10 +101,10 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ photo, onClose }) 
           {hasMultiple && (
             <button
               onClick={handlePrev}
-              className="neo-btn absolute left-4 top-1/2 -translate-y-1/2 bg-[#FFE600] hover:bg-white text-black p-2.5 rounded-xl cursor-pointer shadow-[3px_3px_0px_#000] transition-transform active:scale-95"
+              className="neo-btn absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-[#FFE600] hover:bg-white text-black w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl cursor-pointer shadow-[2px_2px_0px_#000] transition-transform active:scale-95 z-10"
               title="Previous photo (Left Arrow)"
             >
-              <ChevronLeft className="w-6 h-6 stroke-[3]" />
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 stroke-[3]" />
             </button>
           )}
 
@@ -112,10 +112,10 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ photo, onClose }) 
           {hasMultiple && (
             <button
               onClick={handleNext}
-              className="neo-btn absolute right-4 top-1/2 -translate-y-1/2 bg-[#FFE600] hover:bg-white text-black p-2.5 rounded-xl cursor-pointer shadow-[3px_3px_0px_#000] transition-transform active:scale-95"
+              className="neo-btn absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-[#FFE600] hover:bg-white text-black w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl cursor-pointer shadow-[2px_2px_0px_#000] transition-transform active:scale-95 z-10"
               title="Next photo (Right Arrow)"
             >
-              <ChevronRight className="w-6 h-6 stroke-[3]" />
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 stroke-[3]" />
             </button>
           )}
         </div>
