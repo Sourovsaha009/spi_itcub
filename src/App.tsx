@@ -64,9 +64,16 @@ export default function App() {
         setClubData((prev) => {
           const currentTimestamp = prev?.updatedAt || 0;
           const cloudTimestamp = cloudData.updatedAt || 0;
-          // Guard: Only apply cloud snapshot if it is strictly NEWER than local state!
+          // Guard: Apply cloud snapshot if it is strictly NEWER or has richer gallery data
           if (cloudTimestamp > currentTimestamp) {
             return cloudData;
+          }
+          if (cloudTimestamp === currentTimestamp && cloudData.gallery && prev?.gallery) {
+            const cloudPhotos = cloudData.gallery.reduce((sum, g) => sum + (g.images?.length || (g.url ? 1 : 0)), 0);
+            const prevPhotos = prev.gallery.reduce((sum, g) => sum + (g.images?.length || (g.url ? 1 : 0)), 0);
+            if (cloudPhotos > prevPhotos) {
+              return cloudData;
+            }
           }
           return prev;
         });

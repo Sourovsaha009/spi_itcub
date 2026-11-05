@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { ClubData, NoticeItem, GalleryItem, CommitteeMember, FounderItem, FbPostItem, ApplicationItem } from '../types';
 import { compressImageFile, uploadImageToServer, exportDataAsJson, importDataFromJson, resetToDefaultData } from '../services/storageService';
+import { deleteGalleryPostFromFirestore } from '../services/firebase';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -322,6 +323,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const handleDeleteGallery = async (id: string) => {
     if (!confirm('Are you sure you want to delete this gallery post?')) return;
+    deleteGalleryPostFromFirestore(id).catch(() => {});
     const updated = clubData.gallery.filter((g) => g.id !== id);
     await onUpdateData({ ...clubData, gallery: updated });
     triggerToast('Post removed permanently.');
