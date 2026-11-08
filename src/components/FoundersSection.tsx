@@ -1,6 +1,6 @@
 import React from 'react';
 import { FounderItem } from '../types';
-import { Award } from 'lucide-react';
+import { Award, Facebook, Linkedin, Github, Mail, Phone, Globe } from 'lucide-react';
 
 interface FoundersSectionProps {
   founders: FounderItem[];
@@ -24,52 +24,136 @@ export const FoundersSection: React.FC<FoundersSectionProps> = ({ founders }) =>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
-        {founders.map((founder) => (
-          <div
-            key={founder.id}
-            className="neo-card bg-[#003366] text-white p-8 rounded-2xl text-center relative overflow-hidden group"
-          >
-            {/* Photo Avatar or Icon */}
-            <div className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-5">
-              {founder.photoUrl ? (
-                <div className="w-full h-full rounded-2xl border-[3px] border-black bg-white overflow-hidden shadow-[5px_5px_0px_0px_#FFE600] group-hover:-translate-y-1 transition-all duration-200">
-                  <img
-                    src={founder.photoUrl}
-                    alt={founder.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80';
-                    }}
-                  />
-                </div>
-              ) : (
-                <div className="w-full h-full bg-[#FFE600] border-[3px] border-black text-black rounded-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-[5px_5px_0px_0px_#000] group-hover:-translate-y-1 transition-transform duration-150">
-                  <i className={`fa-solid ${founder.icon || 'fa-users-gear'}`}></i>
-                </div>
-              )}
-            </div>
+        {founders.map((founder) => {
+          const hasSocials = founder.socials && Object.values(founder.socials).some((v) => v && v.trim().length > 0);
 
-            <h3 className="font-black text-2xl text-white mb-1.5 tracking-tight">
-              {founder.name}
-            </h3>
-            
-            <p className="text-[#FFE600] text-sm sm:text-base font-black tracking-wide">
-              {founder.role}
-            </p>
+          return (
+            <div
+              key={founder.id}
+              className="neo-card bg-[#003366] text-white p-7 sm:p-8 rounded-2xl text-center relative overflow-hidden group flex flex-col justify-between"
+            >
+              <div>
+                {/* Photo Avatar or Icon */}
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-4">
+                  {founder.photoUrl ? (
+                    <div className="w-full h-full rounded-2xl border-[3px] border-black bg-white overflow-hidden shadow-[5px_5px_0px_0px_#FFE600] group-hover:-translate-y-1 transition-all duration-200">
+                      <img
+                        src={founder.photoUrl}
+                        alt={founder.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80';
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-full bg-[#FFE600] border-[3px] border-black text-black rounded-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-[5px_5px_0px_0px_#000] group-hover:-translate-y-1 transition-transform duration-150">
+                      <i className={`fa-solid ${founder.icon || 'fa-users-gear'}`}></i>
+                    </div>
+                  )}
+                </div>
 
-            <div className="mt-6 pt-5 border-t-2 border-white/20 flex items-center justify-center gap-3">
-              <span className="neo-badge bg-white text-black text-xs font-black">
-                {founder.session}
-              </span>
-              {founder.dept && (
-                <span className="neo-badge bg-[#10B981] text-black text-xs font-black">
-                  {founder.dept}
-                </span>
-              )}
+                <h3 className="font-black text-2xl text-white mb-1 tracking-tight">
+                  {founder.name}
+                </h3>
+                
+                <p className="text-[#FFE600] text-sm sm:text-base font-black tracking-wide mb-3">
+                  {founder.role}
+                </p>
+
+                {/* Bio / Quote if provided */}
+                {founder.bio && (
+                  <div className="my-3 p-3 bg-white/10 rounded-xl border border-white/20 text-xs text-slate-200 font-medium leading-relaxed text-center whitespace-pre-wrap break-words">
+                    &ldquo;{founder.bio}&rdquo;
+                  </div>
+                )}
+              </div>
+
+              <div>
+                {/* Badges */}
+                <div className="mt-4 pt-4 border-t-2 border-white/20 flex items-center justify-center gap-2">
+                  <span className="neo-badge bg-white text-black text-xs font-black">
+                    {founder.session}
+                  </span>
+                  {founder.dept && (
+                    <span className="neo-badge bg-[#10B981] text-black text-xs font-black">
+                      {founder.dept}
+                    </span>
+                  )}
+                </div>
+
+                {/* Social Handles if available */}
+                {hasSocials && (
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                    {founder.socials?.facebook && (
+                      <a
+                        href={founder.socials.facebook.startsWith('http') ? founder.socials.facebook : `https://${founder.socials.facebook}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-8 h-8 rounded-lg bg-[#1877F2] hover:bg-black text-white flex items-center justify-center border-2 border-black shadow-[2px_2px_0px_#000] hover:translate-y-0.5 transition-all"
+                        title="Facebook Profile"
+                      >
+                        <Facebook className="w-4 h-4 fill-current" />
+                      </a>
+                    )}
+                    {founder.socials?.linkedin && (
+                      <a
+                        href={founder.socials.linkedin.startsWith('http') ? founder.socials.linkedin : `https://${founder.socials.linkedin}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-8 h-8 rounded-lg bg-[#0A66C2] hover:bg-black text-white flex items-center justify-center border-2 border-black shadow-[2px_2px_0px_#000] hover:translate-y-0.5 transition-all"
+                        title="LinkedIn Profile"
+                      >
+                        <Linkedin className="w-4 h-4 fill-current" />
+                      </a>
+                    )}
+                    {founder.socials?.github && (
+                      <a
+                        href={founder.socials.github.startsWith('http') ? founder.socials.github : `https://${founder.socials.github}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-8 h-8 rounded-lg bg-black hover:bg-[#FFE600] hover:text-black text-white flex items-center justify-center border-2 border-white shadow-[2px_2px_0px_#000] hover:translate-y-0.5 transition-all"
+                        title="GitHub Profile"
+                      >
+                        <Github className="w-4 h-4" />
+                      </a>
+                    )}
+                    {founder.socials?.email && (
+                      <a
+                        href={`mailto:${founder.socials.email}`}
+                        className="w-8 h-8 rounded-lg bg-[#EA4335] hover:bg-black text-white flex items-center justify-center border-2 border-black shadow-[2px_2px_0px_#000] hover:translate-y-0.5 transition-all"
+                        title={`Email: ${founder.socials.email}`}
+                      >
+                        <Mail className="w-4 h-4 stroke-[2.5]" />
+                      </a>
+                    )}
+                    {founder.socials?.phone && (
+                      <a
+                        href={`tel:${founder.socials.phone}`}
+                        className="w-8 h-8 rounded-lg bg-[#10B981] hover:bg-black text-white flex items-center justify-center border-2 border-black shadow-[2px_2px_0px_#000] hover:translate-y-0.5 transition-all"
+                        title={`Call: ${founder.socials.phone}`}
+                      >
+                        <Phone className="w-4 h-4 stroke-[2.5]" />
+                      </a>
+                    )}
+                    {founder.socials?.website && (
+                      <a
+                        href={founder.socials.website.startsWith('http') ? founder.socials.website : `https://${founder.socials.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-8 h-8 rounded-lg bg-[#FFE600] hover:bg-black hover:text-white text-black flex items-center justify-center border-2 border-black shadow-[2px_2px_0px_#000] hover:translate-y-0.5 transition-all"
+                        title="Website / Portfolio"
+                      >
+                        <Globe className="w-4 h-4 stroke-[2.5]" />
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

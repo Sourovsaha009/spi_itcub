@@ -26,6 +26,15 @@ export interface GalleryItem {
   createdAt?: number;
 }
 
+export interface SocialLinks {
+  facebook?: string;
+  linkedin?: string;
+  github?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+}
+
 export interface FounderItem {
   id: string;
   name: string;
@@ -34,6 +43,8 @@ export interface FounderItem {
   dept?: string;
   icon?: string;
   photoUrl?: string;
+  bio?: string;
+  socials?: SocialLinks;
 }
 
 export interface CommitteeMember {
@@ -43,6 +54,8 @@ export interface CommitteeMember {
   session: string;
   dept?: string;
   photoUrl?: string;
+  bio?: string;
+  socials?: SocialLinks;
 }
 
 export interface FbPostItem {

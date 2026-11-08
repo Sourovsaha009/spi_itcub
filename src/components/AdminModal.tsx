@@ -2,7 +2,8 @@ import React, { useState, useRef } from 'react';
 import {
   X, Lock, Unlock, Save, Trash2, Edit3, Image as ImageIcon,
   UploadCloud, CheckCircle2, AlertTriangle, Download, RefreshCw,
-  Users, Megaphone, Facebook, FileText, KeyRound, Check, Plus, Star, Layers
+  Users, Megaphone, Facebook, FileText, KeyRound, Check, Plus, Star, Layers,
+  Eye, EyeOff, Linkedin, Github, Mail, Phone, Globe
 } from 'lucide-react';
 import { ClubData, NoticeItem, GalleryItem, CommitteeMember, FounderItem, FbPostItem, ApplicationItem } from '../types';
 import { compressImageFile, uploadImageToServer, exportDataAsJson, importDataFromJson, resetToDefaultData } from '../services/storageService';
@@ -24,6 +25,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
+  const [showPasscode, setShowPasscode] = useState(false);
   const [loginError, setLoginError] = useState('');
 
   // Active Admin Tab
@@ -60,7 +62,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [isCompressing, setIsCompressing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form states - Committee & Founders
+  // Form states - Committee & Founders (Picture, Details, Bio, Social Handles)
   const [memberForm, setMemberForm] = useState<{
     id?: string;
     name: string;
@@ -70,13 +72,31 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     type: 'committee' | 'founders';
     icon?: string;
     photoUrl?: string;
+    bio: string;
+    socials: {
+      facebook: string;
+      linkedin: string;
+      github: string;
+      email: string;
+      phone: string;
+      website: string;
+    };
   }>({
     name: '',
     role: '',
     session: 'Session 2021-22',
     dept: 'CST',
     type: 'committee',
-    photoUrl: ''
+    photoUrl: '',
+    bio: '',
+    socials: {
+      facebook: '',
+      linkedin: '',
+      github: '',
+      email: '',
+      phone: '',
+      website: ''
+    }
   });
   const [isMemberPhotoCompressing, setIsMemberPhotoCompressing] = useState(false);
   const [memberPhotoUrlInput, setMemberPhotoUrlInput] = useState('');
@@ -101,7 +121,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     setTimeout(() => setStatusMessage(null), 3500);
   };
 
-  // Login handler
+  // Login handler with hidden passcode security
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const validPass = clubData.settings?.passcode || '1125';
@@ -110,7 +130,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       setLoginError('');
       triggerToast('Admin Dashboard Unlocked');
     } else {
-      setLoginError('Incorrect passcode! (Default is 1125)');
+      setLoginError('Incorrect passcode! Access denied.');
     }
   };
 
@@ -362,6 +382,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }
 
     const photoUrl = memberForm.photoUrl?.trim() || undefined;
+    const bio = memberForm.bio?.trim() || undefined;
+    const socials = {
+      ...(memberForm.socials.facebook?.trim() ? { facebook: memberForm.socials.facebook.trim() } : {}),
+      ...(memberForm.socials.linkedin?.trim() ? { linkedin: memberForm.socials.linkedin.trim() } : {}),
+      ...(memberForm.socials.github?.trim() ? { github: memberForm.socials.github.trim() } : {}),
+      ...(memberForm.socials.email?.trim() ? { email: memberForm.socials.email.trim() } : {}),
+      ...(memberForm.socials.phone?.trim() ? { phone: memberForm.socials.phone.trim() } : {}),
+      ...(memberForm.socials.website?.trim() ? { website: memberForm.socials.website.trim() } : {}),
+    };
+    const hasSocialLinks = Object.keys(socials).length > 0 ? socials : undefined;
 
     if (memberForm.type === 'founders') {
       let updatedFounders = [...clubData.founders];
@@ -374,7 +404,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 role: memberForm.role.trim(),
                 session: memberForm.session.trim(),
                 dept: memberForm.dept.trim(),
-                photoUrl
+                photoUrl,
+                bio,
+                socials: hasSocialLinks
               }
             : f
         );
@@ -387,7 +419,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           session: memberForm.session.trim() || 'Established 2025',
           dept: memberForm.dept.trim() || 'CST',
           icon: 'fa-users-gear',
-          photoUrl
+          photoUrl,
+          bio,
+          socials: hasSocialLinks
         };
         updatedFounders = [...updatedFounders, newFounder];
         triggerToast('Founder added and saved!');
@@ -404,7 +438,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 role: memberForm.role.trim(),
                 session: memberForm.session.trim(),
                 dept: memberForm.dept.trim(),
-                photoUrl
+                photoUrl,
+                bio,
+                socials: hasSocialLinks
               }
             : c
         );
@@ -416,7 +452,9 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           role: memberForm.role.trim(),
           session: memberForm.session.trim() || 'Session 2021-22',
           dept: memberForm.dept.trim() || 'CST',
-          photoUrl
+          photoUrl,
+          bio,
+          socials: hasSocialLinks
         };
         updatedCommittee = [...updatedCommittee, newMember];
         triggerToast('Committee member added and saved!');
@@ -438,7 +476,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         session: item.session,
         dept: item.dept || 'CST',
         type: 'founders',
-        photoUrl: item.photoUrl || ''
+        photoUrl: item.photoUrl || '',
+        bio: item.bio || '',
+        socials: {
+          facebook: item.socials?.facebook || '',
+          linkedin: item.socials?.linkedin || '',
+          github: item.socials?.github || '',
+          email: item.socials?.email || '',
+          phone: item.socials?.phone || '',
+          website: item.socials?.website || ''
+        }
       });
     } else {
       const item = clubData.committee.find((c) => c.id === id);
@@ -450,7 +497,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         session: item.session,
         dept: item.dept || 'CST',
         type: 'committee',
-        photoUrl: item.photoUrl || ''
+        photoUrl: item.photoUrl || '',
+        bio: item.bio || '',
+        socials: {
+          facebook: item.socials?.facebook || '',
+          linkedin: item.socials?.linkedin || '',
+          github: item.socials?.github || '',
+          email: item.socials?.email || '',
+          phone: item.socials?.phone || '',
+          website: item.socials?.website || ''
+        }
       });
     }
     setMemberPhotoUrlInput('');
@@ -476,7 +532,16 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       session: 'Session 2021-22',
       dept: 'CST',
       type: 'committee',
-      photoUrl: ''
+      photoUrl: '',
+      bio: '',
+      socials: {
+        facebook: '',
+        linkedin: '',
+        github: '',
+        email: '',
+        phone: '',
+        website: ''
+      }
     });
     setMemberPhotoUrlInput('');
     if (memberPhotoInputRef.current) memberPhotoInputRef.current.value = '';
@@ -651,19 +716,31 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               <div>
                 <label className="block text-xs font-black text-black uppercase mb-1">Passcode</label>
                 <div className="relative">
-                  <KeyRound className="w-4 h-4 text-black absolute left-3 top-3 stroke-[2.5]" />
+                  <KeyRound className="w-4 h-4 text-black absolute left-3 top-3.5 stroke-[2.5]" />
                   <input
-                    type="password"
+                    type={showPasscode ? 'text' : 'password'}
                     autoFocus
                     required
-                    placeholder="Enter admin passcode (1125)"
+                    placeholder="Enter administrative passcode"
                     value={passcode}
                     onChange={(e) => {
                       setPasscode(e.target.value);
                       setLoginError('');
                     }}
-                    className="w-full border-2 border-black rounded-lg pl-9 pr-3 py-2.5 text-sm bg-white font-medium focus:outline-none focus:shadow-[3px_3px_0px_#000]"
+                    className="w-full border-2 border-black rounded-lg pl-9 pr-10 py-2.5 text-sm bg-white font-medium focus:outline-none focus:shadow-[3px_3px_0px_#000]"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasscode(!showPasscode)}
+                    className="absolute right-3 top-3 text-slate-500 hover:text-black cursor-pointer"
+                    title={showPasscode ? 'Hide passcode' : 'Show passcode'}
+                  >
+                    {showPasscode ? (
+                      <EyeOff className="w-4 h-4 stroke-[2.5]" />
+                    ) : (
+                      <Eye className="w-4 h-4 stroke-[2.5]" />
+                    )}
+                  </button>
                 </div>
                 {loginError && (
                   <p className="text-[#FF5A5F] text-xs font-black mt-1.5 flex items-center gap-1">
@@ -671,14 +748,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     <span>{loginError}</span>
                   </p>
                 )}
-                <p className="text-[11px] text-slate-600 font-bold mt-1.5">
-                  Default passcode: <span className="font-black text-black bg-[#FFE600] px-1.5 py-0.5 rounded border border-black">1125</span>
+                <p className="text-[11px] text-slate-600 font-bold mt-2">
+                  🔒 Protected administrative area for authorized SPI IT Club executives.
                 </p>
               </div>
 
               <button
                 type="submit"
-                className="neo-btn w-full bg-[#FFE600] text-black font-black py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer"
+                className="neo-btn w-full bg-[#FFE600] text-black font-black py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer shadow-[2px_2px_0px_#000]"
               >
                 <Unlock className="w-4 h-4 stroke-[2.5]" />
                 <span>Unlock Dashboard</span>
@@ -846,14 +923,24 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         </select>
                       </div>
 
-                      <textarea
-                        required
-                        rows={3}
-                        placeholder="Detailed notice description and instructions..."
-                        value={noticeForm.body}
-                        onChange={(e) => setNoticeForm({ ...noticeForm, body: e.target.value })}
-                        className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white"
-                      ></textarea>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-xs font-bold text-slate-700 uppercase">
+                            Notice Description &amp; Details *
+                          </label>
+                          <span className="text-[11px] text-emerald-700 font-bold">
+                            ✓ Line breaks &amp; spaces preserved
+                          </span>
+                        </div>
+                        <textarea
+                          required
+                          rows={4}
+                          placeholder="Detailed notice description and instructions (line breaks, spaces & paragraphs will be preserved on the website)..."
+                          value={noticeForm.body}
+                          onChange={(e) => setNoticeForm({ ...noticeForm, body: e.target.value })}
+                          className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium"
+                        ></textarea>
+                      </div>
 
                       <div className="flex items-center gap-2">
                         <input
@@ -983,13 +1070,23 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         </div>
                       </div>
 
-                      <textarea
-                        rows={2}
-                        placeholder="Post description or event caption..."
-                        value={galleryForm.desc}
-                        onChange={(e) => setGalleryForm({ ...galleryForm, desc: e.target.value })}
-                        className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium"
-                      ></textarea>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-xs font-bold text-slate-700 uppercase">
+                            Album Caption / Description
+                          </label>
+                          <span className="text-[11px] text-emerald-700 font-bold">
+                            ✓ Line breaks &amp; spaces preserved
+                          </span>
+                        </div>
+                        <textarea
+                          rows={3}
+                          placeholder="Post description or event highlights (paragraphs and spacing are preserved)..."
+                          value={galleryForm.desc}
+                          onChange={(e) => setGalleryForm({ ...galleryForm, desc: e.target.value })}
+                          className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium"
+                        ></textarea>
+                      </div>
 
                       {/* Multi-Image Upload Drop Zone */}
                       <div
@@ -1363,6 +1460,158 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         </div>
                       </div>
 
+                      {/* Member Bio / Intro */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-xs font-bold text-slate-700 uppercase">
+                            Bio / Short Intro / Quote (Optional)
+                          </label>
+                          <span className="text-[11px] text-emerald-700 font-bold">
+                            ✓ Line breaks &amp; spaces preserved
+                          </span>
+                        </div>
+                        <textarea
+                          rows={2}
+                          placeholder="e.g. Competitive programmer, lead instructor, or personal tech vision..."
+                          value={memberForm.bio}
+                          onChange={(e) => setMemberForm({ ...memberForm, bio: e.target.value })}
+                          className="w-full border border-slate-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium"
+                        />
+                      </div>
+
+                      {/* Social Handles & Contact Links */}
+                      <div className="border border-slate-200 bg-white rounded-xl p-3.5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-xs font-black text-black uppercase flex items-center gap-1.5">
+                            <Globe className="w-3.5 h-3.5 text-[#003366]" />
+                            <span>Social Media &amp; Contact Links (Optional)</span>
+                          </label>
+                          <span className="text-[10px] text-slate-500 font-bold">Buttons appear on member card</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                          {/* Facebook */}
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+                              <Facebook className="w-3 h-3 text-[#1877F2] fill-current" />
+                              <span>Facebook Profile</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="https://facebook.com/username"
+                              value={memberForm.socials.facebook}
+                              onChange={(e) =>
+                                setMemberForm({
+                                  ...memberForm,
+                                  socials: { ...memberForm.socials, facebook: e.target.value }
+                                })
+                              }
+                              className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-[#1877F2] focus:outline-none bg-slate-50 font-medium"
+                            />
+                          </div>
+
+                          {/* LinkedIn */}
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+                              <Linkedin className="w-3 h-3 text-[#0A66C2] fill-current" />
+                              <span>LinkedIn Profile</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="https://linkedin.com/in/username"
+                              value={memberForm.socials.linkedin}
+                              onChange={(e) =>
+                                setMemberForm({
+                                  ...memberForm,
+                                  socials: { ...memberForm.socials, linkedin: e.target.value }
+                                })
+                              }
+                              className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-[#0A66C2] focus:outline-none bg-slate-50 font-medium"
+                            />
+                          </div>
+
+                          {/* GitHub */}
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+                              <Github className="w-3 h-3 text-black" />
+                              <span>GitHub Profile</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="https://github.com/username"
+                              value={memberForm.socials.github}
+                              onChange={(e) =>
+                                setMemberForm({
+                                  ...memberForm,
+                                  socials: { ...memberForm.socials, github: e.target.value }
+                                })
+                              }
+                              className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-black focus:outline-none bg-slate-50 font-medium"
+                            />
+                          </div>
+
+                          {/* Email */}
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+                              <Mail className="w-3 h-3 text-[#EA4335]" />
+                              <span>Email Address</span>
+                            </label>
+                            <input
+                              type="email"
+                              placeholder="member@example.com"
+                              value={memberForm.socials.email}
+                              onChange={(e) =>
+                                setMemberForm({
+                                  ...memberForm,
+                                  socials: { ...memberForm.socials, email: e.target.value }
+                                })
+                              }
+                              className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-[#EA4335] focus:outline-none bg-slate-50 font-medium"
+                            />
+                          </div>
+
+                          {/* Phone / WhatsApp */}
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+                              <Phone className="w-3 h-3 text-[#10B981]" />
+                              <span>Phone / WhatsApp</span>
+                            </label>
+                            <input
+                              type="tel"
+                              placeholder="+880 1..."
+                              value={memberForm.socials.phone}
+                              onChange={(e) =>
+                                setMemberForm({
+                                  ...memberForm,
+                                  socials: { ...memberForm.socials, phone: e.target.value }
+                                })
+                              }
+                              className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-[#10B981] focus:outline-none bg-slate-50 font-medium"
+                            />
+                          </div>
+
+                          {/* Website / Portfolio */}
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+                              <Globe className="w-3 h-3 text-[#003366]" />
+                              <span>Personal Website</span>
+                            </label>
+                            <input
+                              type="url"
+                              placeholder="https://mysite.com"
+                              value={memberForm.socials.website}
+                              onChange={(e) =>
+                                setMemberForm({
+                                  ...memberForm,
+                                  socials: { ...memberForm.socials, website: e.target.value }
+                                })
+                              }
+                              className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-[#003366] focus:outline-none bg-slate-50 font-medium"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="flex flex-wrap gap-2 pt-2">
                         <button
                           type="submit"
@@ -1411,7 +1660,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                             <div className="truncate">
                               <span className="font-black text-black text-sm block truncate">{m.name}</span>
                               <span className="text-slate-600 font-bold block truncate">{m.role}</span>
-                              <span className="text-slate-400 block text-[11px] truncate">{m.session} • {m.dept || 'CST'}</span>
+                              <div className="flex items-center gap-1.5 text-[10px] mt-0.5 flex-wrap">
+                                <span className="text-slate-500 font-medium">{m.session} • {m.dept || 'CST'}</span>
+                                {m.photoUrl && <span className="bg-emerald-100 text-emerald-800 font-black px-1 rounded">Photo ✓</span>}
+                                {m.bio && <span className="bg-purple-100 text-purple-800 font-black px-1 rounded">Bio ✓</span>}
+                                {m.socials && Object.values(m.socials).some(Boolean) && (
+                                  <span className="bg-blue-100 text-blue-800 font-black px-1 rounded">Socials ✓</span>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <div className="flex gap-1.5 shrink-0">
@@ -1459,7 +1715,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                             <div className="truncate">
                               <span className="font-black text-black text-sm block truncate">{f.name}</span>
                               <span className="text-amber-900 font-bold block truncate">{f.role}</span>
-                              <span className="text-slate-500 block text-[11px] truncate">{f.session} • {f.dept || 'CST'}</span>
+                              <div className="flex items-center gap-1.5 text-[10px] mt-0.5 flex-wrap">
+                                <span className="text-slate-500 font-medium">{f.session} • {f.dept || 'CST'}</span>
+                                {f.photoUrl && <span className="bg-emerald-100 text-emerald-800 font-black px-1 rounded">Photo ✓</span>}
+                                {f.bio && <span className="bg-purple-100 text-purple-800 font-black px-1 rounded">Bio ✓</span>}
+                                {f.socials && Object.values(f.socials).some(Boolean) && (
+                                  <span className="bg-blue-100 text-blue-800 font-black px-1 rounded">Socials ✓</span>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <div className="flex gap-1.5 shrink-0">
@@ -1521,14 +1784,24 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         />
                       </div>
 
-                      <textarea
-                        required
-                        rows={3}
-                        placeholder="Post caption text / snippet summary..."
-                        value={postForm.snippet}
-                        onChange={(e) => setPostForm({ ...postForm, snippet: e.target.value })}
-                        className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white"
-                      ></textarea>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-xs font-bold text-slate-700 uppercase">
+                            Post Caption / Description *
+                          </label>
+                          <span className="text-[11px] text-emerald-700 font-bold">
+                            ✓ Line breaks &amp; spaces preserved
+                          </span>
+                        </div>
+                        <textarea
+                          required
+                          rows={4}
+                          placeholder="Post caption text / snippet summary (line breaks, spaces, paragraphs will be displayed exactly as typed)..."
+                          value={postForm.snippet}
+                          onChange={(e) => setPostForm({ ...postForm, snippet: e.target.value })}
+                          className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-medium"
+                        ></textarea>
+                      </div>
 
                       <div className="flex gap-2 pt-2">
                         <button

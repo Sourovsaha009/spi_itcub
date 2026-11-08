@@ -62,7 +62,7 @@ export const FacebookSection: React.FC<FacebookSectionProps> = ({
                   {post.title}
                 </h3>
 
-                <p className="text-slate-700 text-xs sm:text-sm leading-relaxed mb-6 font-medium">
+                <p className="text-slate-700 text-xs sm:text-sm leading-relaxed mb-6 font-medium whitespace-pre-wrap break-words">
                   {post.snippet}
                 </p>
               </div>

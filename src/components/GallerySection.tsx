@@ -236,7 +236,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallery, onSelec
                         {item.title}
                       </h3>
                     </div>
-                    <p className="text-slate-700 text-xs sm:text-sm leading-relaxed line-clamp-2 font-medium">
+                    <p className="text-slate-700 text-xs sm:text-sm leading-relaxed line-clamp-2 font-medium whitespace-pre-line break-words">
                       {item.desc}
                     </p>
                   </div>

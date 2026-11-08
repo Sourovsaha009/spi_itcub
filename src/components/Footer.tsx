@@ -89,7 +89,7 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Bottom bar */}
         <div className="border-t-2 border-white/20 mt-10 pt-6 text-center text-xs text-slate-300 flex flex-col sm:flex-row justify-between items-center gap-3 font-semibold">
           <p>
-            <a href="#admin1" className="hover:text-[#FFE600] transition-colors">
+            <a href="#adminsrv1" className="hover:text-[#FFE600] transition-colors" title="Authorized Executives Portal">
               © 2025-2026 SPI IT Club. All Rights Reserved.
             </a>
           </p>

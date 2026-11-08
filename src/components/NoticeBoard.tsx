@@ -78,7 +78,7 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ notices }) => {
                       </span>
                     )}
                   </div>
-                  <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-line font-medium">
+                  <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap break-words font-medium">
                     {notice.body}
                   </p>
                 </div>

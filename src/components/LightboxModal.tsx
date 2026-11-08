@@ -64,10 +64,10 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ photo, onClose }) 
         onClick={(e) => e.stopPropagation()}
         className="relative max-w-4xl w-full bg-[#FFFDF7] rounded-2xl overflow-hidden cursor-default border-[3px] border-black shadow-[8px_8px_0px_0px_#FFE600] my-auto flex flex-col"
       >
-        {/* Close Button */}
+        {/* Close Button - Adaptive semi-transparent neo-glass button */}
         <button
           onClick={onClose}
-          className="neo-btn absolute top-3 sm:top-4 right-3 sm:right-4 z-20 bg-[#FFE600] text-black w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl cursor-pointer shadow-[2px_2px_0px_#000]"
+          className="neo-btn absolute top-3 sm:top-4 right-3 sm:right-4 z-20 bg-black/60 hover:bg-[#FFE600] text-white hover:text-black backdrop-blur-md border-2 border-white/80 hover:border-black w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl cursor-pointer shadow-[2px_2px_0px_#000] transition-colors"
           title="Close (Esc)"
         >
           <X className="w-5 h-5 sm:w-6 sm:h-6 stroke-[3]" />
@@ -76,12 +76,12 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ photo, onClose }) 
         {/* Counter Badge if multiple images */}
         {hasMultiple && (
           <div className="absolute top-3 sm:top-4 left-3 sm:left-4 z-20 flex items-center gap-2">
-            <span className="neo-badge bg-black text-[#FFE600] text-[11px] sm:text-xs font-mono font-black flex items-center gap-1.5 shadow-[2px_2px_0px_#FFE600]">
+            <span className="neo-badge bg-black/80 backdrop-blur-md text-[#FFE600] text-[11px] sm:text-xs font-mono font-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000] border-2 border-white/60">
               <Layers className="w-3.5 h-3.5" />
               <span>{currentIndex + 1} / {images.length}</span>
             </span>
             {isCover && (
-              <span className="neo-badge bg-[#FFE600] text-black text-[10px] sm:text-[11px] font-black flex items-center gap-1">
+              <span className="neo-badge bg-[#FFE600] text-black text-[10px] sm:text-[11px] font-black flex items-center gap-1 shadow-[2px_2px_0px_#000]">
                 <Star className="w-3 h-3 fill-black text-black" />
                 <span>COVER</span>
               </span>
@@ -89,7 +89,7 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ photo, onClose }) 
           </div>
         )}
 
-        {/* Main Image Frame with Prev/Next Controls */}
+        {/* Main Image Frame with Adaptive Prev/Next Controls */}
         <div className="relative max-h-[65vh] bg-black flex items-center justify-center overflow-hidden border-b-[3px] border-black select-none group">
           <img
             src={currentImageUrl}
@@ -97,22 +97,22 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ photo, onClose }) 
             className="max-h-[65vh] w-auto max-w-full object-contain transition-opacity duration-200"
           />
 
-          {/* Previous Button */}
+          {/* Previous Button - Adaptive & Semi-Transparent */}
           {hasMultiple && (
             <button
               onClick={handlePrev}
-              className="neo-btn absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-[#FFE600] hover:bg-white text-black w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl cursor-pointer shadow-[2px_2px_0px_#000] transition-transform active:scale-95 z-10"
+              className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-[#FFE600] text-white hover:text-black backdrop-blur-md w-9 h-9 sm:w-12 sm:h-12 flex items-center justify-center rounded-full sm:rounded-xl border-2 border-white/70 hover:border-black cursor-pointer shadow-[2px_2px_0px_#000] transition-all active:scale-95 z-10"
               title="Previous photo (Left Arrow)"
             >
               <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 stroke-[3]" />
             </button>
           )}
 
-          {/* Next Button */}
+          {/* Next Button - Adaptive & Semi-Transparent */}
           {hasMultiple && (
             <button
               onClick={handleNext}
-              className="neo-btn absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-[#FFE600] hover:bg-white text-black w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl cursor-pointer shadow-[2px_2px_0px_#000] transition-transform active:scale-95 z-10"
+              className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-[#FFE600] text-white hover:text-black backdrop-blur-md w-9 h-9 sm:w-12 sm:h-12 flex items-center justify-center rounded-full sm:rounded-xl border-2 border-white/70 hover:border-black cursor-pointer shadow-[2px_2px_0px_#000] transition-all active:scale-95 z-10"
               title="Next photo (Right Arrow)"
             >
               <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 stroke-[3]" />
@@ -129,7 +129,7 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ photo, onClose }) 
                 <button
                   key={idx}
                   onClick={() => setCurrentIndex(idx)}
-                  className={`relative w-14 h-14 rounded-lg overflow-hidden border-2 shrink-0 transition-transform cursor-pointer ${
+                  className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden border-2 shrink-0 transition-transform cursor-pointer ${
                     active
                       ? 'border-[#FFE600] ring-2 ring-[#FFE600] scale-105 shadow-[2px_2px_0px_#FFE600]'
                       : 'border-slate-700 opacity-60 hover:opacity-100'
@@ -152,20 +152,20 @@ export const LightboxModal: React.FC<LightboxModalProps> = ({ photo, onClose }) 
           </div>
         )}
 
-        {/* Caption & Metadata Footer */}
+        {/* Caption & Metadata Footer with whitespace-pre-wrap */}
         <div className="p-4 sm:p-5 bg-white text-black flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
             <h3 className="font-black text-lg sm:text-xl text-black mb-1 uppercase tracking-tight flex items-center gap-2">
               <span>{photo.title}</span>
             </h3>
-            <p className="text-slate-700 text-xs sm:text-sm max-w-2xl font-medium leading-relaxed">
+            <p className="text-slate-700 text-xs sm:text-sm max-w-2xl font-medium leading-relaxed whitespace-pre-wrap break-words">
               {photo.desc}
             </p>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             {photo.date && (
-              <span className="neo-badge bg-[#FFE600] text-black text-xs font-black flex items-center gap-1.5">
+              <span className="neo-badge bg-[#FFE600] text-black text-xs font-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000]">
                 <Calendar className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>{photo.date}</span>
               </span>

@@ -40,10 +40,10 @@ export default function App() {
     }
     initData();
 
-    // Check for #admin1 URL hash trigger
+    // Check for #adminsrv1 URL hash trigger
     const checkHash = () => {
       const hash = window.location.hash.toLowerCase();
-      if (hash === '#admin1' || hash === '#admin') {
+      if (hash === '#adminsrv1' || hash === '#admin1' || hash === '#admin') {
         setIsAdminOpen(true);
       }
     };
@@ -98,7 +98,7 @@ export default function App() {
   const handleCloseAdmin = () => {
     setIsAdminOpen(false);
     const hash = window.location.hash.toLowerCase();
-    if (hash === '#admin1' || hash === '#admin') {
+    if (hash === '#adminsrv1' || hash === '#admin1' || hash === '#admin') {
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
     }
   };
