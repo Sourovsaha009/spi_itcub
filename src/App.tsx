@@ -66,11 +66,14 @@ export default function App() {
         setClubData((prev) => {
           const currentTimestamp = prev?.updatedAt || 0;
           const cloudTimestamp = cloudData.updatedAt || 0;
-          // Guard: Apply cloud snapshot if it is strictly NEWER or has richer gallery data
-          if (cloudTimestamp > currentTimestamp) {
+          const cloudFounders = cloudData.founders?.length || 0;
+          const prevFounders = prev?.founders?.length || 0;
+          
+          // Apply cloud snapshot if it is newer, equal, or has more/updated founder records
+          if (cloudTimestamp >= currentTimestamp || cloudFounders > prevFounders) {
             return cloudData;
           }
-          if (cloudTimestamp === currentTimestamp && cloudData.gallery && prev?.gallery) {
+          if (cloudData.gallery && prev?.gallery) {
             const cloudPhotos = cloudData.gallery.reduce((sum, g) => sum + (g.images?.length || (g.url ? 1 : 0)), 0);
             const prevPhotos = prev.gallery.reduce((sum, g) => sum + (g.images?.length || (g.url ? 1 : 0)), 0);
             if (cloudPhotos > prevPhotos) {
@@ -91,8 +94,12 @@ export default function App() {
 
   // Update data handler - updates React state AND permanently saves
   const handleUpdateData = async (newData: ClubData): Promise<boolean> => {
-    setClubData(newData);
-    const success = await persistClubData(newData);
+    const stampedData: ClubData = {
+      ...newData,
+      updatedAt: Date.now()
+    };
+    setClubData(stampedData);
+    const success = await persistClubData(stampedData);
     return success;
   };
 

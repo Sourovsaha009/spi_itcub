@@ -93,6 +93,11 @@ export async function loadFromFirestore(): Promise<ClubData | null> {
  * - main_data holds lightweight site state (notices, courses, committee, founders, settings, applications, gallery index)
  * Guaranteed to never fail with the 1MB document size limit!
  */
+function cleanForFirestore<T>(obj: T): T {
+  if (!obj) return obj;
+  return JSON.parse(JSON.stringify(obj));
+}
+
 export async function saveToFirestore(data: ClubData): Promise<boolean> {
   try {
     const timestamp = data.updatedAt || Date.now();
@@ -101,24 +106,19 @@ export async function saveToFirestore(data: ClubData): Promise<boolean> {
     const galleryItems = data.gallery || [];
     const savePostPromises = galleryItems.map(async (item) => {
       const docRef = doc(db, 'gallery_posts', String(item.id));
-      await setDoc(
-        docRef,
-        {
-          ...item,
-          id: String(item.id),
-          images: item.images && item.images.length > 0 ? item.images : (item.url ? [item.url] : []),
-          updatedAt: timestamp
-        },
-        { merge: true }
-      );
+      const postPayload = cleanForFirestore({
+        ...item,
+        id: String(item.id),
+        images: item.images && item.images.length > 0 ? item.images : (item.url ? [item.url] : []),
+        updatedAt: timestamp
+      });
+      await setDoc(docRef, postPayload, { merge: true });
     });
 
     await Promise.all(savePostPromises);
 
     // 2. Build lightweight main_data summary (omit huge repetitive base64 arrays in main_data)
     const lightweightGallery = galleryItems.map((g) => {
-      // Keep cover image URL if it's standard or reasonable length; if huge base64, keep thumbnail/empty
-      // since the full image is safely preserved in 'gallery_posts' collection doc!
       const isHugeBase64 = g.url && g.url.startsWith('data:image') && g.url.length > 8000;
       return {
         id: String(g.id),
@@ -132,11 +132,11 @@ export async function saveToFirestore(data: ClubData): Promise<boolean> {
       };
     });
 
-    const mainPayload = {
+    const mainPayload = cleanForFirestore({
       ...data,
       gallery: lightweightGallery,
       updatedAt: timestamp
-    };
+    });
 
     await setDoc(CLUB_DOC_REF, mainPayload, { merge: true });
     console.info(`[Firestore] Successfully saved club data across all devices (timestamp: ${timestamp})`);

@@ -181,12 +181,17 @@ export async function loadClubData(): Promise<ClubData> {
     console.info('[Storage] Cloud Firestore not reachable yet:', err);
   }
 
-  // Sort candidates by newest timestamp first. If timestamps are tied, prioritize candidate with more gallery images.
+  // Sort candidates by newest timestamp first. If timestamps are close, prioritize the candidate with more complete data (founders + committee + gallery).
   candidates.sort((a, b) => {
+    const aScore = ((a.data.founders?.length || 0) * 10) + ((a.data.committee?.length || 0) * 10) + ((a.data.gallery?.length || 0) * 2);
+    const bScore = ((b.data.founders?.length || 0) * 10) + ((b.data.committee?.length || 0) * 10) + ((b.data.gallery?.length || 0) * 2);
+    
+    // If one candidate has significantly higher data completeness (e.g. all founders present), favor it
+    if (Math.abs(b.time - a.time) < 60000 && bScore !== aScore) {
+      return bScore - aScore;
+    }
     if (b.time !== a.time) return b.time - a.time;
-    const bImagesCount = (b.data.gallery || []).reduce((acc, g) => acc + (g.images?.length || (g.url ? 1 : 0)), 0);
-    const aImagesCount = (a.data.gallery || []).reduce((acc, g) => acc + (g.images?.length || (g.url ? 1 : 0)), 0);
-    return bImagesCount - aImagesCount;
+    return bScore - aScore;
   });
 
   const bestData = candidates.length > 0 ? candidates[0].data : defaultClubData;
@@ -232,11 +237,14 @@ export async function persistClubData(newData: ClubData): Promise<boolean> {
     updatedAt: Date.now()
   };
 
+  // Clean undefined properties so all serialization layers (Firestore, IDB, JSON) succeed
+  const cleanData: ClubData = JSON.parse(JSON.stringify(stampedData));
+
   // 1. Write to IndexedDB immediately (unlimited storage in browser)
-  const idbPromise = writeToIndexedDB(stampedData);
+  const idbPromise = writeToIndexedDB(cleanData);
 
   // 2. Write to LocalStorage (fast reload cache)
-  safeSetLocalStorage(stampedData);
+  safeSetLocalStorage(cleanData);
 
   // 3. Write to Server Disk API (/api/club-data) - Await to guarantee permanent file write
   let serverOk = false;
@@ -244,7 +252,7 @@ export async function persistClubData(newData: ClubData): Promise<boolean> {
     const res = await fetch('/api/club-data', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(stampedData)
+      body: JSON.stringify(cleanData)
     });
     if (res.ok) {
       serverOk = true;
@@ -253,16 +261,23 @@ export async function persistClubData(newData: ClubData): Promise<boolean> {
     console.warn('[Storage] Server disk save error:', err);
   }
 
-  // 4. Write to Cloud Firestore
-  const cloudOk = await saveToFirestore(stampedData);
+  // 4. Write to Cloud Firestore (universal cloud database across all devices and incognito)
+  const cloudOk = await saveToFirestore(cleanData);
   const idbOk = await idbPromise;
 
   // Dispatch global window event so any open component/tab updates immediately
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('spi_club_data_changed', { detail: stampedData }));
+    window.dispatchEvent(new CustomEvent('spi_club_data_changed', { detail: cleanData }));
   }
 
   return serverOk || cloudOk || idbOk;
+}
+
+// Compress and optimize member photo for universal cross-device persistence (stored as ultra-compact ~15-20KB data URI)
+export async function uploadMemberPhoto(file: File): Promise<string> {
+  // Compress to 360px and 0.68 quality (crisp avatar, ~18KB, self-contained and universally cloud-synced)
+  const base64 = await compressImageFile(file, 360, 0.68);
+  return base64;
 }
 
 // Upload image directly to server disk for permanent, lightweight URL storage

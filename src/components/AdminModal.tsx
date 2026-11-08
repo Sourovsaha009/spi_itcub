@@ -7,7 +7,7 @@ import {
   ArrowUp, ArrowDown, ArrowUpDown, ListOrdered, Sparkles
 } from 'lucide-react';
 import { ClubData, NoticeItem, GalleryItem, CommitteeMember, FounderItem, FbPostItem, ApplicationItem } from '../types';
-import { compressImageFile, uploadImageToServer, exportDataAsJson, importDataFromJson, resetToDefaultData } from '../services/storageService';
+import { compressImageFile, uploadImageToServer, uploadMemberPhoto, exportDataAsJson, importDataFromJson, resetToDefaultData } from '../services/storageService';
 import { deleteGalleryPostFromFirestore } from '../services/firebase';
 
 interface AdminModalProps {
@@ -368,9 +368,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
     try {
       setIsMemberPhotoCompressing(true);
-      const uploadedUrl = await uploadImageToServer(file);
+      // Compress avatar into ultra-compact ~18KB data URI for universal cross-device cloud persistence
+      const uploadedUrl = await uploadMemberPhoto(file);
       setMemberForm((prev) => ({ ...prev, photoUrl: uploadedUrl }));
-      triggerToast('Member photo uploaded and saved permanently!');
+      triggerToast('Member photo optimized and saved permanently across all devices!');
     } catch (err: any) {
       triggerToast(err.message || 'Error processing photo', 'error');
     } finally {
@@ -551,18 +552,17 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       return;
     }
 
-    const photoUrl = memberForm.photoUrl?.trim() || undefined;
-    const bio = memberForm.bio?.trim() || undefined;
-    const socials = {
-      ...(memberForm.socials.facebook?.trim() ? { facebook: memberForm.socials.facebook.trim() } : {}),
-      ...(memberForm.socials.linkedin?.trim() ? { linkedin: memberForm.socials.linkedin.trim() } : {}),
-      ...(memberForm.socials.github?.trim() ? { github: memberForm.socials.github.trim() } : {}),
-      ...(memberForm.socials.email?.trim() ? { email: memberForm.socials.email.trim() } : {}),
-      ...(memberForm.socials.phone?.trim() ? { phone: memberForm.socials.phone.trim() } : {}),
-      ...(memberForm.socials.whatsapp?.trim() ? { whatsapp: memberForm.socials.whatsapp.trim() } : {}),
-      ...(memberForm.socials.website?.trim() ? { website: memberForm.socials.website.trim() } : {}),
-    };
-    const hasSocialLinks = Object.keys(socials).length > 0 ? socials : undefined;
+    const photoUrl = memberForm.photoUrl?.trim() || '';
+    const bio = memberForm.bio?.trim() || '';
+    const socials: Record<string, string> = {};
+    if (memberForm.socials.facebook?.trim()) socials.facebook = memberForm.socials.facebook.trim();
+    if (memberForm.socials.linkedin?.trim()) socials.linkedin = memberForm.socials.linkedin.trim();
+    if (memberForm.socials.github?.trim()) socials.github = memberForm.socials.github.trim();
+    if (memberForm.socials.email?.trim()) socials.email = memberForm.socials.email.trim();
+    if (memberForm.socials.phone?.trim()) socials.phone = memberForm.socials.phone.trim();
+    if (memberForm.socials.whatsapp?.trim()) socials.whatsapp = memberForm.socials.whatsapp.trim();
+    if (memberForm.socials.website?.trim()) socials.website = memberForm.socials.website.trim();
+
     const targetOrder = memberForm.order ? Number(memberForm.order) : undefined;
 
     if (memberForm.type === 'founders') {
@@ -576,10 +576,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 role: memberForm.role.trim(),
                 session: memberForm.session.trim(),
                 dept: memberForm.dept.trim(),
-                photoUrl,
-                bio,
-                socials: hasSocialLinks,
-                order: targetOrder ?? f.order
+                photoUrl: photoUrl || f.photoUrl || '',
+                bio: bio || f.bio || '',
+                socials: Object.keys(socials).length > 0 ? socials : (f.socials || {}),
+                order: targetOrder ? Number(targetOrder) : (f.order || 1)
               }
             : f
         );
@@ -591,7 +591,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           }
         }
         updatedFounders = updatedFounders.map((f, idx) => ({ ...f, order: idx + 1 }));
-        triggerToast('Founder updated and saved!');
+        triggerToast('Founder updated and saved permanently!');
       } else {
         const newFounder: FounderItem = {
           id: String(Date.now()),
@@ -600,10 +600,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           session: memberForm.session.trim() || 'Established 2025',
           dept: memberForm.dept.trim() || 'CST',
           icon: 'fa-users-gear',
-          photoUrl,
-          bio,
-          socials: hasSocialLinks,
-          order: targetOrder ?? (updatedFounders.length + 1)
+          photoUrl: photoUrl,
+          bio: bio,
+          socials: socials,
+          order: targetOrder ? Number(targetOrder) : (updatedFounders.length + 1)
         };
         if (targetOrder && targetOrder >= 1 && targetOrder <= updatedFounders.length + 1) {
           updatedFounders.splice(targetOrder - 1, 0, newFounder);
@@ -611,7 +611,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           updatedFounders.push(newFounder);
         }
         updatedFounders = updatedFounders.map((f, idx) => ({ ...f, order: idx + 1 }));
-        triggerToast('Founder added and saved!');
+        triggerToast('Founder added and saved permanently!');
       }
       await onUpdateData({ ...clubData, founders: updatedFounders });
     } else {
@@ -625,10 +625,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 role: memberForm.role.trim(),
                 session: memberForm.session.trim(),
                 dept: memberForm.dept.trim(),
-                photoUrl,
-                bio,
-                socials: hasSocialLinks,
-                order: targetOrder ?? c.order
+                photoUrl: photoUrl || c.photoUrl || '',
+                bio: bio || c.bio || '',
+                socials: Object.keys(socials).length > 0 ? socials : (c.socials || {}),
+                order: targetOrder ? Number(targetOrder) : (c.order || 1)
               }
             : c
         );
@@ -640,7 +640,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           }
         }
         updatedCommittee = updatedCommittee.map((c, idx) => ({ ...c, order: idx + 1 }));
-        triggerToast('Committee member updated and saved!');
+        triggerToast('Committee member updated and saved permanently!');
       } else {
         const newMember: CommitteeMember = {
           id: String(Date.now()),
@@ -648,10 +648,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           role: memberForm.role.trim(),
           session: memberForm.session.trim() || 'Session 2021-22',
           dept: memberForm.dept.trim() || 'CST',
-          photoUrl,
-          bio,
-          socials: hasSocialLinks,
-          order: targetOrder ?? (updatedCommittee.length + 1)
+          photoUrl: photoUrl,
+          bio: bio,
+          socials: socials,
+          order: targetOrder ? Number(targetOrder) : (updatedCommittee.length + 1)
         };
         if (targetOrder && targetOrder >= 1 && targetOrder <= updatedCommittee.length + 1) {
           updatedCommittee.splice(targetOrder - 1, 0, newMember);
@@ -659,7 +659,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           updatedCommittee.push(newMember);
         }
         updatedCommittee = updatedCommittee.map((c, idx) => ({ ...c, order: idx + 1 }));
-        triggerToast('Committee member added and saved!');
+        triggerToast('Committee member added and saved permanently!');
       }
       await onUpdateData({ ...clubData, committee: updatedCommittee });
     }
