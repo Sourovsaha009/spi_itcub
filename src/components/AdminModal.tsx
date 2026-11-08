@@ -3,7 +3,8 @@ import {
   X, Lock, Unlock, Save, Trash2, Edit3, Image as ImageIcon,
   UploadCloud, CheckCircle2, AlertTriangle, Download, RefreshCw,
   Users, Megaphone, Facebook, FileText, KeyRound, Check, Plus, Star, Layers,
-  Eye, EyeOff, Linkedin, Github, Mail, Phone, Globe
+  Eye, EyeOff, Linkedin, Github, Mail, Phone, Globe,
+  ArrowUp, ArrowDown, ArrowUpDown, ListOrdered, Sparkles
 } from 'lucide-react';
 import { ClubData, NoticeItem, GalleryItem, CommitteeMember, FounderItem, FbPostItem, ApplicationItem } from '../types';
 import { compressImageFile, uploadImageToServer, exportDataAsJson, importDataFromJson, resetToDefaultData } from '../services/storageService';
@@ -62,7 +63,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [isCompressing, setIsCompressing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form states - Committee & Founders (Picture, Details, Bio, Social Handles)
+  // Form states - Committee & Founders (Picture, Details, Bio, Social Handles, Serial Order)
   const [memberForm, setMemberForm] = useState<{
     id?: string;
     name: string;
@@ -73,12 +74,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     icon?: string;
     photoUrl?: string;
     bio: string;
+    order?: number;
     socials: {
       facebook: string;
       linkedin: string;
       github: string;
       email: string;
       phone: string;
+      whatsapp: string;
       website: string;
     };
   }>({
@@ -89,12 +92,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     type: 'committee',
     photoUrl: '',
     bio: '',
+    order: undefined,
     socials: {
       facebook: '',
       linkedin: '',
       github: '',
       email: '',
       phone: '',
+      whatsapp: '',
       website: ''
     }
   });
@@ -374,6 +379,171 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     }
   };
 
+  // Designation hierarchy rank calculator for Executive Committee
+  const getDesignationRank = (role: string = ''): number => {
+    const r = role.toLowerCase().trim();
+    // President / সভাপতি
+    if ((r.includes('president') && !r.includes('vice') && !r.includes('assistant') && !r.includes('joint')) ||
+        (r.includes('সভাপতি') && !r.includes('সহ') && !r.includes('যুগ্ম'))) return 10;
+    
+    // Vice President / সহ-সভাপতি
+    if (r.includes('vice president') || r.includes('vp') || r.includes('সহ-সভাপতি') || r.includes('সহ সভাপতি')) return 20;
+
+    // General Secretary / GS / সাধারণ সম্পাদক
+    if ((r.includes('general secretary') || r.includes('gs') || r.includes('সাধারণ সম্পাদক') || r.includes('সাধারন সম্পাদক')) &&
+        !r.includes('joint') && !r.includes('assistant') && !r.includes('যুগ্ম') && !r.includes('সহ')) return 30;
+
+    // Joint / Assistant General Secretary / যুগ্ম-সাধারণ সম্পাদক
+    if (r.includes('joint') || r.includes('যুগ্ম') || (r.includes('assistant') && r.includes('secretary')) || r.includes('সহ-সাধারণ')) return 40;
+
+    // Organizing Secretary / সাংগঠনিক সম্পাদক
+    if (r.includes('organizing') || r.includes('সাংগঠনিক')) return 50;
+
+    // Treasurer / Finance / অর্থ সম্পাদক
+    if (r.includes('treasurer') || r.includes('finance') || r.includes('অর্থ') || r.includes('কোষাধ্যক্ষ') || r.includes('ক্যাশ')) return 60;
+
+    // Office Secretary / দপ্তর সম্পাদক
+    if (r.includes('office') || r.includes('দপ্তর') || r.includes('দফতর')) return 70;
+
+    // Publicity & Publication / প্রচার ও প্রকাশনা
+    if (r.includes('publicity') || r.includes('publication') || r.includes('প্রচার') || r.includes('প্রকাশনা') || r.includes('media') || r.includes('মিডিয়া')) return 80;
+
+    // Technical / IT Lead / Chief Technical Officer / Workshop Lead
+    if (r.includes('technical') || r.includes('technology') || r.includes('it lead') || r.includes('tech lead') || r.includes('cto') || r.includes('programming') || r.includes('workshop') || r.includes('তথ্য প্রযুক্তি')) return 90;
+
+    // Cultural / Event / Sports Lead
+    if (r.includes('cultural') || r.includes('event') || r.includes('sports') || r.includes('সাংস্কৃতিক') || r.includes('ক্রীড়া') || r.includes('ইভেন্ট')) return 100;
+
+    // Executive Member / কার্যনির্বাহী সদস্য
+    if (r.includes('executive') || r.includes('কার্যনির্বাহী')) return 110;
+
+    // General Member / সাধারণ সদস্য
+    if (r.includes('member') || r.includes('সদস্য')) return 120;
+
+    return 130;
+  };
+
+  // Founder panel rank calculator
+  const getFounderRank = (role: string = ''): number => {
+    const r = role.toLowerCase().trim();
+    if (r === 'founder' || (r.includes('founder') && !r.includes('co'))) return 10;
+    if (r.includes('co-founder') || r.includes('co founder') || r.includes('সহ-প্রতিষ্ঠাতা')) return 20;
+    if (r.includes('advisor') || r.includes('উপদেষ্টা') || r.includes('mentor')) return 30;
+    if (r.includes('executive') || r.includes('কার্যনির্বাহী')) return 40;
+    if (r.includes('member') || r.includes('সদস্য')) return 50;
+    return 60;
+  };
+
+  // Move member up/down in sequence
+  const handleMoveMember = async (id: string, type: 'committee' | 'founders', direction: 'up' | 'down') => {
+    if (type === 'founders') {
+      const list = [...clubData.founders];
+      const index = list.findIndex((f) => f.id === id);
+      if (index === -1) return;
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return;
+
+      const temp = list[index];
+      list[index] = list[targetIndex];
+      list[targetIndex] = temp;
+
+      const normalized = list.map((item, idx) => ({ ...item, order: idx + 1 }));
+      await onUpdateData({ ...clubData, founders: normalized });
+      triggerToast(`Moved ${temp.name} to position #${targetIndex + 1}!`);
+    } else {
+      const list = [...clubData.committee];
+      const index = list.findIndex((c) => c.id === id);
+      if (index === -1) return;
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return;
+
+      const temp = list[index];
+      list[index] = list[targetIndex];
+      list[targetIndex] = temp;
+
+      const normalized = list.map((item, idx) => ({ ...item, order: idx + 1 }));
+      await onUpdateData({ ...clubData, committee: normalized });
+      triggerToast(`Moved ${temp.name} to position #${targetIndex + 1}!`);
+    }
+  };
+
+  // Change serial position directly
+  const handleSetMemberPosition = async (id: string, type: 'committee' | 'founders', newPos: number) => {
+    if (type === 'founders') {
+      const list = [...clubData.founders];
+      const index = list.findIndex((f) => f.id === id);
+      if (index === -1 || newPos < 1 || newPos > list.length || newPos - 1 === index) return;
+
+      const [item] = list.splice(index, 1);
+      list.splice(newPos - 1, 0, item);
+
+      const normalized = list.map((f, idx) => ({ ...f, order: idx + 1 }));
+      await onUpdateData({ ...clubData, founders: normalized });
+      triggerToast(`Moved ${item.name} to position #${newPos}!`);
+    } else {
+      const list = [...clubData.committee];
+      const index = list.findIndex((c) => c.id === id);
+      if (index === -1 || newPos < 1 || newPos > list.length || newPos - 1 === index) return;
+
+      const [item] = list.splice(index, 1);
+      list.splice(newPos - 1, 0, item);
+
+      const normalized = list.map((c, idx) => ({ ...c, order: idx + 1 }));
+      await onUpdateData({ ...clubData, committee: normalized });
+      triggerToast(`Moved ${item.name} to position #${newPos}!`);
+    }
+  };
+
+  // Auto-sort by standard designation hierarchy
+  const handleAutoSortByHierarchy = async (type: 'committee' | 'founders') => {
+    if (type === 'founders') {
+      const sorted = [...clubData.founders]
+        .sort((a, b) => {
+          const rankA = getFounderRank(a.role);
+          const rankB = getFounderRank(b.role);
+          if (rankA !== rankB) return rankA - rankB;
+          return a.name.localeCompare(b.name);
+        })
+        .map((item, idx) => ({ ...item, order: idx + 1 }));
+
+      await onUpdateData({ ...clubData, founders: sorted });
+      triggerToast('Founder panel sorted by designation hierarchy!');
+    } else {
+      const sorted = [...clubData.committee]
+        .sort((a, b) => {
+          const rankA = getDesignationRank(a.role);
+          const rankB = getDesignationRank(b.role);
+          if (rankA !== rankB) return rankA - rankB;
+          return a.name.localeCompare(b.name);
+        })
+        .map((item, idx) => ({ ...item, order: idx + 1 }));
+
+      await onUpdateData({ ...clubData, committee: sorted });
+      triggerToast('Executive committee sorted by designation hierarchy!');
+    }
+  };
+
+  // Alphabetical sort
+  const handleSortAlphabetical = async (type: 'committee' | 'founders', order: 'asc' | 'desc') => {
+    if (type === 'founders') {
+      const sorted = [...clubData.founders]
+        .sort((a, b) => {
+          return order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+        })
+        .map((item, idx) => ({ ...item, order: idx + 1 }));
+      await onUpdateData({ ...clubData, founders: sorted });
+      triggerToast(`Founders sorted ${order === 'asc' ? 'A to Z' : 'Z to A'}!`);
+    } else {
+      const sorted = [...clubData.committee]
+        .sort((a, b) => {
+          return order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+        })
+        .map((item, idx) => ({ ...item, order: idx + 1 }));
+      await onUpdateData({ ...clubData, committee: sorted });
+      triggerToast(`Committee sorted ${order === 'asc' ? 'A to Z' : 'Z to A'}!`);
+    }
+  };
+
   const handleSaveMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!memberForm.name.trim() || !memberForm.role.trim()) {
@@ -389,9 +559,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       ...(memberForm.socials.github?.trim() ? { github: memberForm.socials.github.trim() } : {}),
       ...(memberForm.socials.email?.trim() ? { email: memberForm.socials.email.trim() } : {}),
       ...(memberForm.socials.phone?.trim() ? { phone: memberForm.socials.phone.trim() } : {}),
+      ...(memberForm.socials.whatsapp?.trim() ? { whatsapp: memberForm.socials.whatsapp.trim() } : {}),
       ...(memberForm.socials.website?.trim() ? { website: memberForm.socials.website.trim() } : {}),
     };
     const hasSocialLinks = Object.keys(socials).length > 0 ? socials : undefined;
+    const targetOrder = memberForm.order ? Number(memberForm.order) : undefined;
 
     if (memberForm.type === 'founders') {
       let updatedFounders = [...clubData.founders];
@@ -406,10 +578,19 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 dept: memberForm.dept.trim(),
                 photoUrl,
                 bio,
-                socials: hasSocialLinks
+                socials: hasSocialLinks,
+                order: targetOrder ?? f.order
               }
             : f
         );
+        if (targetOrder && targetOrder >= 1 && targetOrder <= updatedFounders.length) {
+          const currentIdx = updatedFounders.findIndex((f) => f.id === memberForm.id);
+          if (currentIdx !== -1) {
+            const [movedItem] = updatedFounders.splice(currentIdx, 1);
+            updatedFounders.splice(targetOrder - 1, 0, movedItem);
+          }
+        }
+        updatedFounders = updatedFounders.map((f, idx) => ({ ...f, order: idx + 1 }));
         triggerToast('Founder updated and saved!');
       } else {
         const newFounder: FounderItem = {
@@ -421,9 +602,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           icon: 'fa-users-gear',
           photoUrl,
           bio,
-          socials: hasSocialLinks
+          socials: hasSocialLinks,
+          order: targetOrder ?? (updatedFounders.length + 1)
         };
-        updatedFounders = [...updatedFounders, newFounder];
+        if (targetOrder && targetOrder >= 1 && targetOrder <= updatedFounders.length + 1) {
+          updatedFounders.splice(targetOrder - 1, 0, newFounder);
+        } else {
+          updatedFounders.push(newFounder);
+        }
+        updatedFounders = updatedFounders.map((f, idx) => ({ ...f, order: idx + 1 }));
         triggerToast('Founder added and saved!');
       }
       await onUpdateData({ ...clubData, founders: updatedFounders });
@@ -440,10 +627,19 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 dept: memberForm.dept.trim(),
                 photoUrl,
                 bio,
-                socials: hasSocialLinks
+                socials: hasSocialLinks,
+                order: targetOrder ?? c.order
               }
             : c
         );
+        if (targetOrder && targetOrder >= 1 && targetOrder <= updatedCommittee.length) {
+          const currentIdx = updatedCommittee.findIndex((c) => c.id === memberForm.id);
+          if (currentIdx !== -1) {
+            const [movedItem] = updatedCommittee.splice(currentIdx, 1);
+            updatedCommittee.splice(targetOrder - 1, 0, movedItem);
+          }
+        }
+        updatedCommittee = updatedCommittee.map((c, idx) => ({ ...c, order: idx + 1 }));
         triggerToast('Committee member updated and saved!');
       } else {
         const newMember: CommitteeMember = {
@@ -454,9 +650,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           dept: memberForm.dept.trim() || 'CST',
           photoUrl,
           bio,
-          socials: hasSocialLinks
+          socials: hasSocialLinks,
+          order: targetOrder ?? (updatedCommittee.length + 1)
         };
-        updatedCommittee = [...updatedCommittee, newMember];
+        if (targetOrder && targetOrder >= 1 && targetOrder <= updatedCommittee.length + 1) {
+          updatedCommittee.splice(targetOrder - 1, 0, newMember);
+        } else {
+          updatedCommittee.push(newMember);
+        }
+        updatedCommittee = updatedCommittee.map((c, idx) => ({ ...c, order: idx + 1 }));
         triggerToast('Committee member added and saved!');
       }
       await onUpdateData({ ...clubData, committee: updatedCommittee });
@@ -469,6 +671,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     if (type === 'founders') {
       const item = clubData.founders.find((f) => f.id === id);
       if (!item) return;
+      const currentIdx = clubData.founders.findIndex((f) => f.id === id);
       setMemberForm({
         id: item.id,
         name: item.name,
@@ -476,6 +679,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         session: item.session,
         dept: item.dept || 'CST',
         type: 'founders',
+        order: item.order ?? (currentIdx + 1),
         photoUrl: item.photoUrl || '',
         bio: item.bio || '',
         socials: {
@@ -484,12 +688,14 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           github: item.socials?.github || '',
           email: item.socials?.email || '',
           phone: item.socials?.phone || '',
+          whatsapp: item.socials?.whatsapp || '',
           website: item.socials?.website || ''
         }
       });
     } else {
       const item = clubData.committee.find((c) => c.id === id);
       if (!item) return;
+      const currentIdx = clubData.committee.findIndex((c) => c.id === id);
       setMemberForm({
         id: item.id,
         name: item.name,
@@ -497,6 +703,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         session: item.session,
         dept: item.dept || 'CST',
         type: 'committee',
+        order: item.order ?? (currentIdx + 1),
         photoUrl: item.photoUrl || '',
         bio: item.bio || '',
         socials: {
@@ -505,6 +712,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           github: item.socials?.github || '',
           email: item.socials?.email || '',
           phone: item.socials?.phone || '',
+          whatsapp: item.socials?.whatsapp || '',
           website: item.socials?.website || ''
         }
       });
@@ -515,10 +723,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const handleDeleteMember = async (id: string, type: 'committee' | 'founders') => {
     if (!confirm('Are you sure you want to remove this member?')) return;
     if (type === 'founders') {
-      const updated = clubData.founders.filter((f) => f.id !== id);
+      const updated = clubData.founders.filter((f) => f.id !== id).map((f, idx) => ({ ...f, order: idx + 1 }));
       await onUpdateData({ ...clubData, founders: updated });
     } else {
-      const updated = clubData.committee.filter((c) => c.id !== id);
+      const updated = clubData.committee.filter((c) => c.id !== id).map((c, idx) => ({ ...c, order: idx + 1 }));
       await onUpdateData({ ...clubData, committee: updated });
     }
     triggerToast('Member removed permanently.');
@@ -532,6 +740,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       session: 'Session 2021-22',
       dept: 'CST',
       type: 'committee',
+      order: undefined,
       photoUrl: '',
       bio: '',
       socials: {
@@ -540,6 +749,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         github: '',
         email: '',
         phone: '',
+        whatsapp: '',
         website: ''
       }
     });
@@ -1339,7 +1549,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                         <div>
                           <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Session</label>
                           <input
@@ -1370,6 +1580,28 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                             <option value="committee">Executive Committee</option>
                             <option value="founders">Founder Panel</option>
                           </select>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="block text-xs font-bold text-slate-700 uppercase">
+                              Serial Order
+                            </label>
+                            <span className="text-[10px] text-amber-700 font-bold">1 = Top</span>
+                          </div>
+                          <input
+                            type="number"
+                            min="1"
+                            placeholder="e.g. 1"
+                            value={memberForm.order ?? ''}
+                            onChange={(e) =>
+                              setMemberForm({
+                                ...memberForm,
+                                order: e.target.value ? parseInt(e.target.value, 10) : undefined
+                              })
+                            }
+                            className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white font-bold min-h-[44px]"
+                            title="Desired position in the list (1 is top/president)"
+                          />
                         </div>
                       </div>
 
@@ -1570,11 +1802,32 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                             />
                           </div>
 
-                          {/* Phone / WhatsApp */}
+                          {/* WhatsApp */}
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+                              <i className="fa-brands fa-whatsapp text-[#25D366] text-sm"></i>
+                              <span>WhatsApp Number</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="+880 1... or 017..."
+                              value={memberForm.socials.whatsapp}
+                              onChange={(e) =>
+                                setMemberForm({
+                                  ...memberForm,
+                                  socials: { ...memberForm.socials, whatsapp: e.target.value }
+                                })
+                              }
+                              className="w-full border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-[#25D366] focus:outline-none bg-slate-50 font-medium"
+                              title="Visitors can tap to chat directly with this number"
+                            />
+                          </div>
+
+                          {/* Phone / Call */}
                           <div>
                             <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
                               <Phone className="w-3 h-3 text-[#10B981]" />
-                              <span>Phone / WhatsApp</span>
+                              <span>Phone Number (Call)</span>
                             </label>
                             <input
                               type="tel"
@@ -1635,115 +1888,325 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
                   {/* Existing Members & Founders */}
                   <div>
-                    <h4 className="font-extrabold text-slate-700 text-xs uppercase tracking-wider mb-2">
-                      Current Executive Committee ({clubData.committee.length})
-                    </h4>
-                    <div className="space-y-2 mb-6">
-                      {clubData.committee.map((m) => (
-                        <div
-                          key={m.id}
-                          className="flex items-center justify-between p-2.5 sm:p-3 bg-white rounded-xl border-2 border-slate-200 hover:border-black text-xs transition"
+                    {/* Executive Committee Header & Sorting Toolbar */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 pt-2">
+                      <div className="flex items-center gap-2">
+                        <span className="neo-badge bg-[#003366] text-[#FFE600] font-mono text-xs px-2 py-0.5 font-black flex items-center gap-1.5">
+                          <ListOrdered className="w-3.5 h-3.5" />
+                          <span>Serial Order</span>
+                        </span>
+                        <h4 className="font-extrabold text-slate-800 text-xs sm:text-sm uppercase tracking-wider">
+                          Executive Committee ({clubData.committee.length})
+                        </h4>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleAutoSortByHierarchy('committee')}
+                          className="neo-btn bg-[#FFE600] text-black font-black text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer shadow-[1.5px_1.5px_0px_#000]"
+                          title="Auto-sort by designation: President -> Vice President -> General Secretary -> Joint Secretary -> Organizing Secretary..."
                         >
-                          <div className="flex items-center gap-3 min-w-0 pr-2">
-                            {/* Member Avatar Thumbnail */}
-                            <div className="w-12 h-12 rounded-xl border-2 border-black overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center shadow-[1.5px_1.5px_0px_#000]">
-                              {m.photoUrl ? (
-                                <img
-                                  src={m.photoUrl}
-                                  alt={m.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <i className="fa-solid fa-user-tie text-slate-600 text-lg"></i>
-                              )}
-                            </div>
-                            <div className="truncate">
-                              <span className="font-black text-black text-sm block truncate">{m.name}</span>
-                              <span className="text-slate-600 font-bold block truncate">{m.role}</span>
-                              <div className="flex items-center gap-1.5 text-[10px] mt-0.5 flex-wrap">
-                                <span className="text-slate-500 font-medium">{m.session} • {m.dept || 'CST'}</span>
-                                {m.photoUrl && <span className="bg-emerald-100 text-emerald-800 font-black px-1 rounded">Photo ✓</span>}
-                                {m.bio && <span className="bg-purple-100 text-purple-800 font-black px-1 rounded">Bio ✓</span>}
-                                {m.socials && Object.values(m.socials).some(Boolean) && (
-                                  <span className="bg-blue-100 text-blue-800 font-black px-1 rounded">Socials ✓</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex gap-1.5 shrink-0">
-                            <button
-                              onClick={() => handleEditMember(m.id, 'committee')}
-                              className="neo-btn p-2 bg-blue-50 text-blue-700 rounded-lg font-bold min-w-[38px] min-h-[38px] flex items-center justify-center cursor-pointer"
-                              title="Edit Member"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteMember(m.id, 'committee')}
-                              className="neo-btn p-2 bg-red-50 text-red-600 rounded-lg font-bold min-w-[38px] min-h-[38px] flex items-center justify-center cursor-pointer"
-                              title="Delete Member"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                          <Sparkles className="w-3.5 h-3.5 stroke-[2.5]" />
+                          <span>Sort by Designation</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSortAlphabetical('committee', 'asc')}
+                          className="neo-btn bg-white hover:bg-slate-100 text-black font-bold text-xs px-2 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                          title="Sort alphabetically A to Z"
+                        >
+                          <span>A-Z</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSortAlphabetical('committee', 'desc')}
+                          className="neo-btn bg-white hover:bg-slate-100 text-black font-bold text-xs px-2 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                          title="Sort reverse Z to A"
+                        >
+                          <span>Z-A</span>
+                        </button>
+                      </div>
                     </div>
 
-                    <h4 className="font-extrabold text-slate-700 text-xs uppercase tracking-wider mb-2">
-                      Founder Panel ({clubData.founders.length})
-                    </h4>
-                    <div className="space-y-2">
-                      {clubData.founders.map((f) => (
-                        <div
-                          key={f.id}
-                          className="flex items-center justify-between p-2.5 sm:p-3 bg-[#FFFBEB] rounded-xl border-2 border-amber-300 hover:border-black text-xs transition"
-                        >
-                          <div className="flex items-center gap-3 min-w-0 pr-2">
-                            {/* Founder Avatar Thumbnail */}
-                            <div className="w-12 h-12 rounded-xl border-2 border-black overflow-hidden bg-[#FFE600] shrink-0 flex items-center justify-center shadow-[1.5px_1.5px_0px_#000]">
-                              {f.photoUrl ? (
-                                <img
-                                  src={f.photoUrl}
-                                  alt={f.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <i className={`fa-solid ${f.icon || 'fa-users-gear'} text-black text-lg`}></i>
-                              )}
-                            </div>
-                            <div className="truncate">
-                              <span className="font-black text-black text-sm block truncate">{f.name}</span>
-                              <span className="text-amber-900 font-bold block truncate">{f.role}</span>
-                              <div className="flex items-center gap-1.5 text-[10px] mt-0.5 flex-wrap">
-                                <span className="text-slate-500 font-medium">{f.session} • {f.dept || 'CST'}</span>
-                                {f.photoUrl && <span className="bg-emerald-100 text-emerald-800 font-black px-1 rounded">Photo ✓</span>}
-                                {f.bio && <span className="bg-purple-100 text-purple-800 font-black px-1 rounded">Bio ✓</span>}
-                                {f.socials && Object.values(f.socials).some(Boolean) && (
-                                  <span className="bg-blue-100 text-blue-800 font-black px-1 rounded">Socials ✓</span>
+                    {clubData.committee.length === 0 ? (
+                      <div className="text-center py-6 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl mb-6">
+                        <p className="text-slate-500 font-bold text-xs">No committee members added yet.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5 mb-8">
+                        {clubData.committee.map((m, idx) => (
+                          <div
+                            key={m.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white rounded-xl border-2 border-slate-200 hover:border-black text-xs transition gap-3"
+                          >
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              {/* Serial Position Control */}
+                              <div className="flex flex-col items-center justify-center shrink-0">
+                                <span
+                                  className="neo-badge bg-[#FFE600] text-black font-mono font-black text-xs px-2 py-0.5 rounded-md border border-black shadow-[1px_1px_0px_#000]"
+                                  title={`Current Serial Position #${idx + 1}`}
+                                >
+                                  #{idx + 1}
+                                </span>
+                                {clubData.committee.length > 1 && (
+                                  <select
+                                    value={idx + 1}
+                                    onChange={(e) => handleSetMemberPosition(m.id, 'committee', Number(e.target.value))}
+                                    className="text-[10px] font-bold mt-1 bg-slate-100 border border-slate-300 rounded px-1 py-0.5 cursor-pointer hover:border-black"
+                                    title="Quick change position"
+                                  >
+                                    {clubData.committee.map((_, i) => (
+                                      <option key={i + 1} value={i + 1}>
+                                        #{i + 1}
+                                      </option>
+                                    ))}
+                                  </select>
                                 )}
                               </div>
+
+                              {/* Member Avatar Thumbnail */}
+                              <div className="w-12 h-12 rounded-xl border-2 border-black overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center shadow-[1.5px_1.5px_0px_#000]">
+                                {m.photoUrl ? (
+                                  <img
+                                    src={m.photoUrl}
+                                    alt={m.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <i className="fa-solid fa-user-tie text-slate-600 text-lg"></i>
+                                )}
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-black text-black text-sm">{m.name}</span>
+                                  <span className="neo-badge bg-blue-100 text-[#003366] text-[10px] font-extrabold px-1.5 py-0.2 rounded border border-blue-300">
+                                    {m.role}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[10px] mt-1 flex-wrap">
+                                  <span className="text-slate-500 font-medium">{m.session} • {m.dept || 'CST'}</span>
+                                  {m.photoUrl && <span className="bg-emerald-100 text-emerald-800 font-black px-1 rounded">Photo ✓</span>}
+                                  {m.bio && <span className="bg-purple-100 text-purple-800 font-black px-1 rounded">Bio ✓</span>}
+                                  {m.socials?.whatsapp && (
+                                    <span className="bg-emerald-100 text-emerald-800 font-black px-1 rounded flex items-center gap-0.5">
+                                      <i className="fa-brands fa-whatsapp text-xs"></i> WhatsApp ✓
+                                    </span>
+                                  )}
+                                  {m.socials && Object.values(m.socials).some(Boolean) && (
+                                    <span className="bg-blue-100 text-blue-800 font-black px-1 rounded">Socials ✓</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Ordering and Action Buttons */}
+                            <div className="flex items-center justify-end gap-1.5 shrink-0 self-end sm:self-center">
+                              <button
+                                type="button"
+                                disabled={idx === 0}
+                                onClick={() => handleMoveMember(m.id, 'committee', 'up')}
+                                className={`neo-btn p-1.5 rounded-lg font-bold min-w-[34px] min-h-[34px] flex items-center justify-center ${
+                                  idx === 0
+                                    ? 'bg-slate-100 text-slate-300 cursor-not-allowed border-slate-200 shadow-none'
+                                    : 'bg-amber-100 hover:bg-amber-200 text-amber-900 cursor-pointer'
+                                }`}
+                                title="Move Up (Rank Higher)"
+                              >
+                                <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={idx === clubData.committee.length - 1}
+                                onClick={() => handleMoveMember(m.id, 'committee', 'down')}
+                                className={`neo-btn p-1.5 rounded-lg font-bold min-w-[34px] min-h-[34px] flex items-center justify-center ${
+                                  idx === clubData.committee.length - 1
+                                    ? 'bg-slate-100 text-slate-300 cursor-not-allowed border-slate-200 shadow-none'
+                                    : 'bg-amber-100 hover:bg-amber-200 text-amber-900 cursor-pointer'
+                                }`}
+                                title="Move Down (Rank Lower)"
+                              >
+                                <ArrowDown className="w-4 h-4 stroke-[2.5]" />
+                              </button>
+                              <button
+                                onClick={() => handleEditMember(m.id, 'committee')}
+                                className="neo-btn p-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-bold min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
+                                title="Edit Member"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteMember(m.id, 'committee')}
+                                className="neo-btn p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-bold min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
+                                title="Delete Member"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </div>
-                          <div className="flex gap-1.5 shrink-0">
-                            <button
-                              onClick={() => handleEditMember(f.id, 'founders')}
-                              className="neo-btn p-2 bg-blue-50 text-blue-700 rounded-lg font-bold min-w-[38px] min-h-[38px] flex items-center justify-center cursor-pointer"
-                              title="Edit Founder"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteMember(f.id, 'founders')}
-                              className="neo-btn p-2 bg-red-50 text-red-600 rounded-lg font-bold min-w-[38px] min-h-[38px] flex items-center justify-center cursor-pointer"
-                              title="Delete Founder"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Founder Panel Header & Sorting Toolbar */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 pt-4 border-t border-slate-200">
+                      <div className="flex items-center gap-2">
+                        <span className="neo-badge bg-[#FFE600] text-black font-mono text-xs px-2 py-0.5 font-black flex items-center gap-1.5">
+                          <ListOrdered className="w-3.5 h-3.5" />
+                          <span>Serial Order</span>
+                        </span>
+                        <h4 className="font-extrabold text-slate-800 text-xs sm:text-sm uppercase tracking-wider">
+                          Founder Panel ({clubData.founders.length})
+                        </h4>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleAutoSortByHierarchy('founders')}
+                          className="neo-btn bg-[#FFE600] text-black font-black text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer shadow-[1.5px_1.5px_0px_#000]"
+                          title="Auto-sort founders by role: Founder -> Co-Founder -> Advisor -> Executive Member..."
+                        >
+                          <Sparkles className="w-3.5 h-3.5 stroke-[2.5]" />
+                          <span>Sort by Founder Hierarchy</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSortAlphabetical('founders', 'asc')}
+                          className="neo-btn bg-white hover:bg-slate-100 text-black font-bold text-xs px-2 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                          title="Sort alphabetically A to Z"
+                        >
+                          <span>A-Z</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSortAlphabetical('founders', 'desc')}
+                          className="neo-btn bg-white hover:bg-slate-100 text-black font-bold text-xs px-2 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                          title="Sort reverse Z to A"
+                        >
+                          <span>Z-A</span>
+                        </button>
+                      </div>
                     </div>
+
+                    {clubData.founders.length === 0 ? (
+                      <div className="text-center py-6 bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl">
+                        <p className="text-slate-500 font-bold text-xs">No founders added yet.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {clubData.founders.map((f, idx) => (
+                          <div
+                            key={f.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-[#FFFBEB] rounded-xl border-2 border-amber-300 hover:border-black text-xs transition gap-3"
+                          >
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              {/* Serial Position Control */}
+                              <div className="flex flex-col items-center justify-center shrink-0">
+                                <span
+                                  className="neo-badge bg-[#003366] text-[#FFE600] font-mono font-black text-xs px-2 py-0.5 rounded-md border border-black shadow-[1px_1px_0px_#000]"
+                                  title={`Current Serial Position #${idx + 1}`}
+                                >
+                                  #{idx + 1}
+                                </span>
+                                {clubData.founders.length > 1 && (
+                                  <select
+                                    value={idx + 1}
+                                    onChange={(e) => handleSetMemberPosition(f.id, 'founders', Number(e.target.value))}
+                                    className="text-[10px] font-bold mt-1 bg-amber-100 border border-amber-400 rounded px-1 py-0.5 cursor-pointer hover:border-black"
+                                    title="Quick change position"
+                                  >
+                                    {clubData.founders.map((_, i) => (
+                                      <option key={i + 1} value={i + 1}>
+                                        #{i + 1}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+                              </div>
+
+                              {/* Founder Avatar Thumbnail */}
+                              <div className="w-12 h-12 rounded-xl border-2 border-black overflow-hidden bg-[#FFE600] shrink-0 flex items-center justify-center shadow-[1.5px_1.5px_0px_#000]">
+                                {f.photoUrl ? (
+                                  <img
+                                    src={f.photoUrl}
+                                    alt={f.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <i className={`fa-solid ${f.icon || 'fa-users-gear'} text-black text-lg`}></i>
+                                )}
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-black text-black text-sm">{f.name}</span>
+                                  <span className="neo-badge bg-[#FFE600] text-black text-[10px] font-extrabold px-1.5 py-0.2 rounded border border-black">
+                                    {f.role}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[10px] mt-1 flex-wrap">
+                                  <span className="text-slate-500 font-medium">{f.session} • {f.dept || 'CST'}</span>
+                                  {f.photoUrl && <span className="bg-emerald-100 text-emerald-800 font-black px-1 rounded">Photo ✓</span>}
+                                  {f.bio && <span className="bg-purple-100 text-purple-800 font-black px-1 rounded">Bio ✓</span>}
+                                  {f.socials?.whatsapp && (
+                                    <span className="bg-emerald-100 text-emerald-800 font-black px-1 rounded flex items-center gap-0.5">
+                                      <i className="fa-brands fa-whatsapp text-xs"></i> WhatsApp ✓
+                                    </span>
+                                  )}
+                                  {f.socials && Object.values(f.socials).some(Boolean) && (
+                                    <span className="bg-blue-100 text-blue-800 font-black px-1 rounded">Socials ✓</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Ordering and Action Buttons */}
+                            <div className="flex items-center justify-end gap-1.5 shrink-0 self-end sm:self-center">
+                              <button
+                                type="button"
+                                disabled={idx === 0}
+                                onClick={() => handleMoveMember(f.id, 'founders', 'up')}
+                                className={`neo-btn p-1.5 rounded-lg font-bold min-w-[34px] min-h-[34px] flex items-center justify-center ${
+                                  idx === 0
+                                    ? 'bg-slate-100 text-slate-300 cursor-not-allowed border-slate-200 shadow-none'
+                                    : 'bg-amber-100 hover:bg-amber-200 text-amber-900 cursor-pointer'
+                                }`}
+                                title="Move Up (Rank Higher)"
+                              >
+                                <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={idx === clubData.founders.length - 1}
+                                onClick={() => handleMoveMember(f.id, 'founders', 'down')}
+                                className={`neo-btn p-1.5 rounded-lg font-bold min-w-[34px] min-h-[34px] flex items-center justify-center ${
+                                  idx === clubData.founders.length - 1
+                                    ? 'bg-slate-100 text-slate-300 cursor-not-allowed border-slate-200 shadow-none'
+                                    : 'bg-amber-100 hover:bg-amber-200 text-amber-900 cursor-pointer'
+                                }`}
+                                title="Move Down (Rank Lower)"
+                              >
+                                <ArrowDown className="w-4 h-4 stroke-[2.5]" />
+                              </button>
+                              <button
+                                onClick={() => handleEditMember(f.id, 'founders')}
+                                className="neo-btn p-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-bold min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
+                                title="Edit Founder"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteMember(f.id, 'founders')}
+                                className="neo-btn p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg font-bold min-w-[34px] min-h-[34px] flex items-center justify-center cursor-pointer"
+                                title="Delete Founder"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

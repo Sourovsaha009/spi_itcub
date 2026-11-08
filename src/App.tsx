@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ClubData, GalleryItem, ApplicationItem } from './types';
+import { ClubData, GalleryItem, ApplicationItem, CommitteeMember, FounderItem } from './types';
 import { defaultClubData, loadClubData, persistClubData, getInitialSyncCache } from './services/storageService';
 import { subscribeToFirestore } from './services/firebase';
 import { Navbar } from './components/Navbar';
@@ -14,6 +14,7 @@ import { Footer } from './components/Footer';
 import { AdminModal } from './components/AdminModal';
 import { MembershipModal } from './components/MembershipModal';
 import { LightboxModal } from './components/LightboxModal';
+import { MemberConnectModal } from './components/MemberConnectModal';
 import { CustomCursor } from './components/CustomCursor';
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isJoinOpen, setIsJoinOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryItem | null>(null);
+  const [selectedConnectMember, setSelectedConnectMember] = useState<CommitteeMember | FounderItem | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Initialize data on mount & listen to secret #admin1 hash
@@ -165,11 +167,13 @@ export default function App() {
         {/* Section 3: Founder Panel */}
         <FoundersSection
           founders={clubData.founders}
+          onSelectMember={(founder) => setSelectedConnectMember(founder)}
         />
 
         {/* Section 4: Current Executive Committee */}
         <CommitteeSection
           committee={clubData.committee}
+          onSelectMember={(member) => setSelectedConnectMember(member)}
         />
 
         {/* Section 5: Official Facebook Updates Showcase */}
@@ -203,6 +207,12 @@ export default function App() {
       <LightboxModal
         photo={selectedPhoto}
         onClose={() => setSelectedPhoto(null)}
+      />
+
+      {/* Member Direct Connect & Social Channels Modal */}
+      <MemberConnectModal
+        member={selectedConnectMember}
+        onClose={() => setSelectedConnectMember(null)}
       />
     </div>
   );

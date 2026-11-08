@@ -32,6 +32,7 @@ export interface SocialLinks {
   github?: string;
   email?: string;
   phone?: string;
+  whatsapp?: string;
   website?: string;
 }
 
@@ -45,6 +46,7 @@ export interface FounderItem {
   photoUrl?: string;
   bio?: string;
   socials?: SocialLinks;
+  order?: number;
 }
 
 export interface CommitteeMember {
@@ -56,6 +58,7 @@ export interface CommitteeMember {
   photoUrl?: string;
   bio?: string;
   socials?: SocialLinks;
+  order?: number;
 }
 
 export interface FbPostItem {

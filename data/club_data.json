@@ -11,14 +11,20 @@
   ],
   "founders": [
     {
+      "order": 1,
       "role": "Founder",
       "name": "Sourov Saha",
       "id": "1793075909328",
       "session": "Session 2021-22",
       "dept": "CST",
-      "icon": "fa-users-gear"
+      "icon": "fa-users-gear",
+      "socials": {
+        "facebook": "https://www.facebook.com/SPIitClub01",
+        "email": "sourovsaha378@gmail.com"
+      }
     },
     {
+      "order": 2,
       "role": "Co-Founder",
       "session": "Session 2021-22",
       "name": "Hridoy Khan",
@@ -27,6 +33,7 @@
       "icon": "fa-users-gear"
     },
     {
+      "order": 3,
       "icon": "fa-users-gear",
       "dept": "CST",
       "id": "1793076090533",
@@ -35,6 +42,7 @@
       "role": "Executive Member"
     },
     {
+      "order": 4,
       "role": "Executive member",
       "session": "Session 2022-23",
       "name": "Abdur Rahman",
@@ -43,6 +51,7 @@
       "icon": "fa-users-gear"
     },
     {
+      "order": 5,
       "id": "1793076205902",
       "role": "Executive member",
       "name": "Sumaiya Akter",
@@ -51,6 +60,7 @@
       "icon": "fa-users-gear"
     },
     {
+      "order": 6,
       "dept": "CST",
       "id": "1793076279917",
       "icon": "fa-users-gear",
