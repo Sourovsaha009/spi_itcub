@@ -7,7 +7,7 @@ import {
   ArrowUp, ArrowDown, ArrowUpDown, ListOrdered, Sparkles
 } from 'lucide-react';
 import { ClubData, NoticeItem, GalleryItem, CommitteeMember, FounderItem, FbPostItem, ApplicationItem } from '../types';
-import { compressImageFile, uploadImageToServer, uploadMemberPhoto, exportDataAsJson, importDataFromJson, resetToDefaultData } from '../services/storageService';
+import { compressImageFile, uploadImageToServer, uploadMemberPhoto, exportDataAsJson, importDataFromJson, resetToDefaultData, getAdminToken, setAdminToken, clearAdminToken, getAdminHeaders } from '../services/storageService';
 import { deleteGalleryPostFromFirestore } from '../services/firebase';
 
 interface AdminModalProps {
@@ -28,6 +28,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [passcode, setPasscode] = useState('');
   const [showPasscode, setShowPasscode] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Active Admin Tab
   const [activeTab, setActiveTab] = useState<'notices' | 'gallery' | 'committee' | 'posts' | 'applications' | 'settings'>('notices');
@@ -116,8 +117,33 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   });
 
   // Form states - Passcode change
+  const [currentPassInput, setCurrentPassInput] = useState('');
   const [newPassInput, setNewPassInput] = useState('');
   const [confirmPassInput, setConfirmPassInput] = useState('');
+
+  // Validate active session token on modal open
+  React.useEffect(() => {
+    if (isOpen) {
+      const token = getAdminToken();
+      if (token) {
+        fetch('/api/admin/verify-session', {
+          headers: getAdminHeaders()
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.valid) {
+              setIsAuthenticated(true);
+            } else {
+              clearAdminToken();
+              setIsAuthenticated(false);
+            }
+          })
+          .catch(() => {
+            setIsAuthenticated(true);
+          });
+      }
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -126,22 +152,54 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     setTimeout(() => setStatusMessage(null), 3500);
   };
 
-  // Login handler with hidden passcode security
-  const handleLogin = (e: React.FormEvent) => {
+  // Login handler with cryptographically secure server-side verification and rate limiting
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validPass = clubData.settings?.passcode || '1125';
-    if (passcode === validPass || passcode === '1125') {
-      setIsAuthenticated(true);
-      setLoginError('');
-      triggerToast('Admin Dashboard Unlocked');
-    } else {
-      setLoginError('Incorrect passcode! Access denied.');
+    if (!passcode.trim()) {
+      setLoginError('Please enter administrator passcode.');
+      return;
+    }
+
+    setIsLoggingIn(true);
+    setLoginError('');
+
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: passcode.trim() })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success && data.token) {
+        setAdminToken(data.token);
+        setIsAuthenticated(true);
+        setPasscode('');
+        setLoginError('');
+        triggerToast('Admin Dashboard Unlocked');
+      } else {
+        setLoginError(data.error || 'Incorrect passcode! Access denied.');
+      }
+    } catch {
+      setLoginError('Server authentication error. Please try again.');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', {
+        method: 'POST',
+        headers: getAdminHeaders()
+      });
+    } catch {
+      // ignore
+    }
+    clearAdminToken();
     setIsAuthenticated(false);
     setPasscode('');
+    triggerToast('Logged out from Admin Dashboard');
   };
 
   // --- NOTICE OPERATIONS ---
@@ -830,8 +888,12 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   // --- PASSCODE CHANGE ---
   const handleChangePasscode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassInput.length < 3) {
-      triggerToast('Passcode must be at least 3 characters', 'error');
+    if (!currentPassInput) {
+      triggerToast('Current administrator passcode is required', 'error');
+      return;
+    }
+    if (newPassInput.length < 4) {
+      triggerToast('New passcode must be at least 4 characters', 'error');
       return;
     }
     if (newPassInput !== confirmPassInput) {
@@ -839,21 +901,27 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       return;
     }
 
-    const updatedSettings = {
-      ...(clubData.settings || {
-        passcode: '1125',
-        clubName: 'SPI IT CLUB',
-        instituteName: 'Shariatpur Polytechnic Institute',
-        facebookUrl: 'https://www.facebook.com/SPIitClub01',
-        department: 'Computer Department (Dept. CST)'
-      }),
-      passcode: newPassInput
-    };
-
-    await onUpdateData({ ...clubData, settings: updatedSettings });
-    setNewPassInput('');
-    setConfirmPassInput('');
-    triggerToast('Admin passcode changed successfully! Remember your new code.');
+    try {
+      const res = await fetch('/api/admin/change-secret', {
+        method: 'POST',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({
+          currentPassword: currentPassInput.trim(),
+          newPassword: newPassInput.trim()
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        triggerToast('Admin passcode updated successfully in secure credentials vault!');
+        setCurrentPassInput('');
+        setNewPassInput('');
+        setConfirmPassInput('');
+      } else {
+        triggerToast(data.error || 'Failed to update passcode', 'error');
+      }
+    } catch {
+      triggerToast('Error updating passcode. Check connection.', 'error');
+    }
   };
 
   // --- BACKUP & RESTORE ---
@@ -970,10 +1038,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
               <button
                 type="submit"
-                className="neo-btn w-full bg-[#FFE600] text-black font-black py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer shadow-[2px_2px_0px_#000]"
+                disabled={isLoggingIn}
+                className="neo-btn w-full bg-[#FFE600] text-black font-black py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer shadow-[2px_2px_0px_#000] disabled:opacity-50"
               >
                 <Unlock className="w-4 h-4 stroke-[2.5]" />
-                <span>Unlock Dashboard</span>
+                <span>{isLoggingIn ? 'Verifying Credentials...' : 'Unlock Dashboard'}</span>
               </button>
             </form>
           </div>
@@ -2400,11 +2469,19 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                     <h4 className="font-extrabold text-[#003366] text-sm mb-1">Change Admin Passcode</h4>
                     <p className="text-xs text-slate-500 mb-4">Set a custom passcode to restrict admin dashboard access</p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                       <input
                         type="password"
                         required
-                        placeholder="New Passcode"
+                        placeholder="Current Passcode"
+                        value={currentPassInput}
+                        onChange={(e) => setCurrentPassInput(e.target.value)}
+                        className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white"
+                      />
+                      <input
+                        type="password"
+                        required
+                        placeholder="New Passcode (min 4 chars)"
                         value={newPassInput}
                         onChange={(e) => setNewPassInput(e.target.value)}
                         className="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-[#003366] focus:outline-none bg-white"

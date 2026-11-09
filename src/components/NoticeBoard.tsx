@@ -30,7 +30,7 @@ export const NoticeBoard: React.FC<NoticeBoardProps> = ({ notices }) => {
                 Official Notice Board
               </h2>
               <p className="text-xs text-slate-700 font-bold flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] border border-black inline-block"></span>
                 <span>Live announcements &amp; academic circulars</span>
               </p>
             </div>

@@ -102,7 +102,6 @@ export const defaultClubData: ClubData = {
   ],
   applications: [],
   settings: {
-    passcode: "1125",
     clubName: "SPI IT CLUB",
     instituteName: "Shariatpur Polytechnic Institute",
     facebookUrl: "https://www.facebook.com/SPIitClub01",
@@ -230,6 +229,39 @@ function ensureDefaults(data: ClubData): ClubData {
   return data;
 }
 
+export function getAdminToken(): string | null {
+  try {
+    return sessionStorage.getItem('spi_admin_token');
+  } catch {
+    return null;
+  }
+}
+
+export function setAdminToken(token: string): void {
+  try {
+    sessionStorage.setItem('spi_admin_token', token);
+  } catch (err) {
+    console.error('Failed to set admin token in sessionStorage:', err);
+  }
+}
+
+export function clearAdminToken(): void {
+  try {
+    sessionStorage.removeItem('spi_admin_token');
+  } catch (err) {
+    console.error('Failed to clear admin token from sessionStorage:', err);
+  }
+}
+
+export function getAdminHeaders(): Record<string, string> {
+  const token = getAdminToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 // Save data to all stores: Server Disk API + Cloud Firestore + IndexedDB + LocalStorage
 export async function persistClubData(newData: ClubData): Promise<boolean> {
   const stampedData: ClubData = {
@@ -251,7 +283,7 @@ export async function persistClubData(newData: ClubData): Promise<boolean> {
   try {
     const res = await fetch('/api/club-data', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAdminHeaders(),
       body: JSON.stringify(cleanData)
     });
     if (res.ok) {
@@ -288,7 +320,7 @@ export async function uploadImageToServer(file: File): Promise<string> {
   try {
     const res = await fetch('/api/upload-image', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAdminHeaders(),
       body: JSON.stringify({ imageBase64: base64, filename: file.name })
     });
     if (res.ok) {

@@ -13,67 +13,62 @@ export const Hero: React.FC<HeroProps> = ({ onOpenJoin, facebookUrl = "https://w
       <div className="bg-[#FFE600] border-b-[3px] border-black overflow-hidden py-2 font-black text-xs sm:text-sm tracking-wider uppercase select-none">
         <div className="animate-marquee whitespace-nowrap flex items-center gap-6">
           <span>⚡ SPI IT CLUB</span>
-          <span>•</span>
+          <span className="text-black/60 font-mono">//</span>
           <span>ESTABLISHED 2025</span>
-          <span>•</span>
+          <span className="text-black/60 font-mono">//</span>
           <span>COMPUTER SCIENCE &amp; TECHNOLOGY (DEPT. CST)</span>
-          <span>•</span>
+          <span className="text-black/60 font-mono">//</span>
           <span>LEARN, COLLABORATE &amp; INNOVATE</span>
-          <span>•</span>
-          <span>PROGRAMMING • NETWORKING • HARDWARE • CYBER SECURITY</span>
-          <span>•</span>
+          <span className="text-black/60 font-mono">//</span>
+          <span>PROGRAMMING // NETWORKING // HARDWARE // CYBER SECURITY</span>
+          <span className="text-black/60 font-mono">//</span>
           <span>SHARIATPUR POLYTECHNIC INSTITUTE</span>
-          <span>•</span>
+          <span className="text-black/60 font-mono">//</span>
           <span>⚡ SPI IT CLUB</span>
-          <span>•</span>
+          <span className="text-black/60 font-mono">//</span>
           <span>ESTABLISHED 2025</span>
-          <span>•</span>
+          <span className="text-black/60 font-mono">//</span>
           <span>COMPUTER SCIENCE &amp; TECHNOLOGY (DEPT. CST)</span>
-          <span>•</span>
+          <span className="text-black/60 font-mono">//</span>
           <span>LEARN, COLLABORATE &amp; INNOVATE</span>
-          <span>•</span>
-          <span>PROGRAMMING • NETWORKING • HARDWARE • CYBER SECURITY</span>
-          <span>•</span>
+          <span className="text-black/60 font-mono">//</span>
           <span>SHARIATPUR POLYTECHNIC INSTITUTE</span>
         </div>
       </div>
 
       {/* Hero Section */}
       <section className="bg-[#003366] text-white py-14 sm:py-20 px-4 relative overflow-hidden border-b-[3px] border-black">
-        {/* Decorative Neo Grid & Cyber Matrix Background */}
+        {/* Decorative Neo Grid & Matrix Background */}
         <div className="absolute inset-0 bg-cyber-grid opacity-25 pointer-events-none"></div>
         <div className="absolute inset-0 bg-neo-dots opacity-15 pointer-events-none"></div>
 
-        {/* Floating Tech Chips (Desktop) */}
+        {/* Floating Polytechnic Institutional Badges (Desktop) */}
         <div className="hidden lg:block absolute left-8 top-28 animate-float-slow pointer-events-none z-10">
-          <div className="neo-box bg-black text-[#FFE600] text-xs font-mono font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-[4px_4px_0px_#FFE600]">
-            <Code2 className="w-3.5 h-3.5 text-[#10B981]" />
-            <span>const SPI = &#123; est: 2025, dept: 'CST' &#125;;</span>
+          <div className="neo-box bg-black text-[#FFE600] text-xs font-mono font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-[4px_4px_0px_#FFE600] border-2 border-black">
+            <BookOpen className="w-3.5 h-3.5 text-[#10B981]" />
+            <span>Govt. Polytechnic Shariatpur (Est. 2001)</span>
           </div>
         </div>
 
         <div className="hidden lg:block absolute right-8 top-32 animate-float-reverse pointer-events-none z-10">
-          <div className="neo-box bg-white text-black text-xs font-mono font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-[4px_4px_0px_#000]">
-            <Wifi className="w-3.5 h-3.5 text-[#003366]" />
-            <span>NET: 10.0.0.1 // 1000Mbps OK</span>
+          <div className="neo-box bg-white text-black text-xs font-mono font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-[4px_4px_0px_#000] border-2 border-black">
+            <Cpu className="w-3.5 h-3.5 text-[#003366]" />
+            <span>CST Dept. Lab // BTEB Curriculum</span>
           </div>
         </div>
 
         <div className="hidden xl:block absolute left-12 bottom-20 animate-float-reverse pointer-events-none z-10">
-          <div className="neo-box bg-[#10B981] text-black text-xs font-mono font-black px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-[3px_3px_0px_#000]">
-            <Cpu className="w-3.5 h-3.5" />
-            <span>SYS_CORE: CST_STUDENTS</span>
+          <div className="neo-box bg-[#FFE600] text-black text-xs font-mono font-black px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-[3px_3px_0px_#000] border-2 border-black">
+            <Layers className="w-3.5 h-3.5 text-[#003366]" />
+            <span>Student Leadership // 2025</span>
           </div>
         </div>
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
           
-          {/* Live System Status Indicator */}
-          <div className="inline-flex items-center gap-2.5 bg-black/80 border-2 border-[#FFE600] px-3.5 py-1 rounded-full text-xs font-mono text-[#FFE600] mb-5 shadow-[3px_3px_0px_#000]">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#10B981]"></span>
-            </span>
+          {/* Live System Status Indicator (Hallmark Compliant: solid crisp indicator, zero ping) */}
+          <div className="inline-flex items-center gap-2.5 bg-black/85 border-2 border-[#FFE600] px-3.5 py-1 rounded-full text-xs font-mono text-[#FFE600] mb-5 shadow-[3px_3px_0px_#000]">
+            <span className="inline-flex rounded-full h-2.5 w-2.5 bg-[#10B981] border border-black"></span>
             <span className="font-bold tracking-wider">SYSTEM STATUS: ACTIVE ONLINE</span>
           </div>
 

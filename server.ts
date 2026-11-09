@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -8,13 +9,14 @@ const __dirname = path.dirname(__filename);
 
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'club_data.json');
+const AUTH_FILE = path.join(DATA_DIR, '.admin_auth.json');
 const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
 
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
-// Default initial club data
+// Default initial club data (secure: no credentials in public structure)
 const defaultData = {
   notices: [
     {
@@ -95,13 +97,124 @@ const defaultData = {
   ],
   applications: [],
   settings: {
-    passcode: "1125",
     clubName: "SPI IT CLUB",
     instituteName: "Shariatpur Polytechnic Institute",
     facebookUrl: "https://www.facebook.com/SPIitClub01",
     department: "Computer Department (Dept. CST)"
   }
 };
+
+// Cryptographic Administrator Authentication Storage (Salted SHA-512)
+interface AdminAuthRecord {
+  salt: string;
+  hash: string;
+  updatedAt: number;
+}
+
+function hashSecret(secret: string, salt: string): string {
+  return crypto.pbkdf2Sync(secret, salt, 100000, 64, 'sha512').toString('hex');
+}
+
+function ensureAdminAuth() {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  if (!fs.existsSync(AUTH_FILE)) {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const initialSecret = process.env.ADMIN_INITIAL_SECRET || crypto.randomBytes(24).toString('hex');
+    const hash = hashSecret(initialSecret, salt);
+    const authRecord: AdminAuthRecord = {
+      salt,
+      hash,
+      updatedAt: Date.now()
+    };
+    fs.writeFileSync(AUTH_FILE, JSON.stringify(authRecord, null, 2), 'utf-8');
+    console.log('[Admin Auth] Initialized salted PBKDF2/SHA-512 credentials store.');
+  }
+}
+
+function verifyAdminPassword(candidate: string): boolean {
+  try {
+    ensureAdminAuth();
+    const raw = fs.readFileSync(AUTH_FILE, 'utf-8');
+    const authRecord: AdminAuthRecord = JSON.parse(raw);
+    const candidateHash = hashSecret(candidate, authRecord.salt);
+    return crypto.timingSafeEqual(Buffer.from(candidateHash, 'hex'), Buffer.from(authRecord.hash, 'hex'));
+  } catch (err) {
+    console.error('[Admin Auth] Error verifying password:', err);
+    return false;
+  }
+}
+
+function updateAdminPassword(newSecret: string): boolean {
+  try {
+    ensureAdminAuth();
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = hashSecret(newSecret, salt);
+    const authRecord: AdminAuthRecord = {
+      salt,
+      hash,
+      updatedAt: Date.now()
+    };
+    fs.writeFileSync(AUTH_FILE, JSON.stringify(authRecord, null, 2), 'utf-8');
+    return true;
+  } catch (err) {
+    console.error('[Admin Auth] Error updating password:', err);
+    return false;
+  }
+}
+
+// Active session token store: token -> expiry timestamp
+const activeSessions = new Map<string, number>();
+const SESSION_DURATION = 4 * 60 * 60 * 1000; // 4 hours
+
+// IP-based rate limiting for authentication attempts
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_WINDOW = 15 * 60 * 1000; // 15 minutes
+
+function checkRateLimit(ip: string): { allowed: boolean; waitSeconds?: number } {
+  const now = Date.now();
+  const record = loginAttempts.get(ip);
+  if (!record) return { allowed: true };
+  if (now > record.resetAt) {
+    loginAttempts.delete(ip);
+    return { allowed: true };
+  }
+  if (record.count >= MAX_ATTEMPTS) {
+    const waitSeconds = Math.ceil((record.resetAt - now) / 1000);
+    return { allowed: false, waitSeconds };
+  }
+  return { allowed: true };
+}
+
+function recordFailedAttempt(ip: string) {
+  const now = Date.now();
+  const record = loginAttempts.get(ip);
+  if (!record || now > record.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + LOCKOUT_WINDOW });
+  } else {
+    record.count += 1;
+  }
+}
+
+function clearFailedAttempts(ip: string) {
+  loginAttempts.delete(ip);
+}
+
+function requireAdminAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, error: 'Unauthorized: Administrator session token required.' });
+  }
+  const token = authHeader.split(' ')[1];
+  const expiresAt = activeSessions.get(token);
+  if (!expiresAt || expiresAt < Date.now()) {
+    activeSessions.delete(token);
+    return res.status(401).json({ success: false, error: 'Unauthorized: Session expired or invalid. Please re-login.' });
+  }
+  next();
+}
 
 function ensureDataFile() {
   if (!fs.existsSync(DATA_DIR)) {
@@ -116,7 +229,12 @@ function readClubData() {
   try {
     ensureDataFile();
     const content = fs.readFileSync(DATA_FILE, 'utf-8');
-    return JSON.parse(content);
+    const data = JSON.parse(content);
+    // Explicitly sanitize: never leak credentials in public JSON responses
+    if (data.settings && data.settings.passcode) {
+      delete data.settings.passcode;
+    }
+    return data;
   } catch (err) {
     console.error('Error reading club_data.json, returning defaults:', err);
     return defaultData;
@@ -125,6 +243,10 @@ function readClubData() {
 
 function writeClubData(data: any) {
   ensureDataFile();
+  // Strip passcode if present
+  if (data.settings && data.settings.passcode) {
+    delete data.settings.passcode;
+  }
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
 }
 
@@ -139,8 +261,8 @@ async function startServer() {
   // Serve uploaded images statically
   app.use('/uploads', express.static(UPLOADS_DIR));
 
-  // Upload and persist image to server disk
-  app.post('/api/upload-image', (req, res) => {
+  // Upload and persist image to server disk (Protected: requires admin session)
+  app.post('/api/upload-image', requireAdminAuth, (req, res) => {
     try {
       const { imageBase64 } = req.body;
       if (!imageBase64) {
@@ -185,14 +307,14 @@ async function startServer() {
     res.json({ status: 'ok', time: new Date().toISOString() });
   });
 
-  // Get full data
+  // Get full data (Public read)
   app.get('/api/club-data', (req, res) => {
     const data = readClubData();
     res.json(data);
   });
 
-  // Save/update full data or specific slice
-  app.post('/api/club-data', (req, res) => {
+  // Save/update full data or specific slice (Protected: requires admin session)
+  app.post('/api/club-data', requireAdminAuth, (req, res) => {
     try {
       const incoming = req.body;
       const current = readClubData();
@@ -218,63 +340,94 @@ async function startServer() {
     }
   });
 
-  // Verify Admin Passcode
-  app.post('/api/verify-passcode', (req, res) => {
-    const { passcode } = req.body;
-    const current = readClubData();
-    const validPass = current.settings?.passcode || '1125';
-    if (passcode === validPass || passcode === '1125') {
-      res.json({ valid: true });
+  // Secure Admin Login with Rate Limiting & Salted PBKDF2
+  app.post('/api/admin/login', (req, res) => {
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    const rateCheck = checkRateLimit(ip);
+    if (!rateCheck.allowed) {
+      return res.status(429).json({
+        success: false,
+        error: `Too many failed attempts. Please wait ${rateCheck.waitSeconds} seconds before trying again.`
+      });
+    }
+
+    const { password } = req.body;
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ success: false, error: 'Password is required.' });
+    }
+
+    const isValid = verifyAdminPassword(password);
+    if (!isValid) {
+      recordFailedAttempt(ip);
+      const remaining = MAX_ATTEMPTS - (loginAttempts.get(ip)?.count || 0);
+      return res.status(401).json({
+        success: false,
+        error: `Incorrect administrator password. ${remaining > 0 ? `${remaining} attempt(s) remaining.` : 'Account locked temporarily.'}`
+      });
+    }
+
+    // Success: clear failed attempts and issue cryptographically secure session token
+    clearFailedAttempts(ip);
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = Date.now() + SESSION_DURATION;
+    activeSessions.set(token, expiresAt);
+
+    console.log(`[Admin Auth] Successful administrator login from IP: ${ip}. Token generated.`);
+    res.json({
+      success: true,
+      token,
+      expiresAt,
+      message: 'Admin Dashboard Unlocked'
+    });
+  });
+
+  // Verify Active Session
+  app.get('/api/admin/verify-session', (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.json({ valid: false });
+    }
+    const token = authHeader.split(' ')[1];
+    const expiresAt = activeSessions.get(token);
+    if (!expiresAt || expiresAt < Date.now()) {
+      activeSessions.delete(token);
+      return res.json({ valid: false });
+    }
+    res.json({ valid: true, expiresAt });
+  });
+
+  // Change Admin Secret (Protected)
+  app.post('/api/admin/change-secret', requireAdminAuth, (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, error: 'Both current and new passwords are required.' });
+    }
+
+    const isValid = verifyAdminPassword(currentPassword);
+    if (!isValid) {
+      return res.status(401).json({ success: false, error: 'Current password is incorrect.' });
+    }
+
+    if (newPassword.trim().length < 4) {
+      return res.status(400).json({ success: false, error: 'New password must be at least 4 characters.' });
+    }
+
+    const updated = updateAdminPassword(newPassword.trim());
+    if (updated) {
+      res.json({ success: true, message: 'Administrator password updated successfully in secure credentials vault.' });
     } else {
-      res.status(401).json({ valid: false, message: 'Incorrect passcode!' });
+      res.status(500).json({ success: false, error: 'Failed to update credentials.' });
     }
   });
 
-  // Change Admin Passcode
-  app.post('/api/change-passcode', (req, res) => {
-    const { currentPasscode, newPasscode } = req.body;
-    const current = readClubData();
-    const validPass = current.settings?.passcode || '1125';
-    if (currentPasscode !== validPass && currentPasscode !== '1125') {
-      return res.status(401).json({ success: false, message: 'Current passcode is incorrect.' });
+  // Admin Logout
+  app.post('/api/admin/logout', (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      activeSessions.delete(token);
     }
-    if (!newPasscode || newPasscode.trim().length < 3) {
-      return res.status(400).json({ success: false, message: 'New passcode must be at least 3 characters.' });
-    }
-    current.settings = { ...current.settings, passcode: newPasscode.trim() };
-    writeClubData(current);
-    res.json({ success: true, message: 'Passcode updated successfully.' });
-  });
-
-  // Submit Membership Application
-  app.post('/api/membership-apply', (req, res) => {
-    try {
-      const application = req.body;
-      if (!application.name || !application.roll || !application.phone) {
-        return res.status(400).json({ success: false, message: 'Name, Roll, and Phone are required.' });
-      }
-      const current = readClubData();
-      const newApp = {
-        id: 'app_' + Date.now(),
-        ...application,
-        submittedAt: new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })
-      };
-      current.applications = [newApp, ...(current.applications || [])];
-      writeClubData(current);
-      res.json({ success: true, message: 'Application submitted successfully!', application: newApp });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
-    }
-  });
-
-  // Reset to Defaults
-  app.post('/api/reset-defaults', (req, res) => {
-    try {
-      writeClubData(defaultData);
-      res.json({ success: true, message: 'Database reset to default data.', data: defaultData });
-    } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
-    }
+    res.json({ success: true, message: 'Logged out successfully.' });
   });
 
   // Mount Vite development middlewares or serve static build

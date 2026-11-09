@@ -15,7 +15,6 @@ import { AdminModal } from './components/AdminModal';
 import { MembershipModal } from './components/MembershipModal';
 import { LightboxModal } from './components/LightboxModal';
 import { MemberConnectModal } from './components/MemberConnectModal';
-import { CustomCursor } from './components/CustomCursor';
 
 export default function App() {
   // Synchronous cache hydration on page refresh: zero flash of default content
@@ -137,9 +136,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FFFDF7] text-black antialiased selection:bg-[#FFE600] selection:text-black font-sans">
-      {/* Tech Creative Cursor (Crosshair Reticle & HUD) */}
-      <CustomCursor />
-
       {/* Navigation (Public Admin button removed, accessed via #admin1) */}
       <Navbar
         onOpenJoin={() => setIsJoinOpen(true)}

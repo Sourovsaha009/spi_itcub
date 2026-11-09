@@ -1,0 +1,25 @@
+:root {
+  /* Surfaces */
+  --neo-canvas: #FFFDF7;
+  --neo-card: #FFFFFF;
+  --neo-ink: #000000;
+  
+  /* Brand Accents */
+  --neo-yellow: #FFE600;
+  --neo-navy: #003366;
+  --neo-green: #10B981;
+  
+  /* Brutalist Geometry & Physics */
+  --neo-border: 2.5px solid #000000;
+  --neo-shadow-sm: 2px 2px 0px #000000;
+  --neo-shadow-md: 4px 4px 0px #000000;
+  --neo-shadow-lg: 6px 6px 0px #000000;
+  --neo-radius: 12px;
+}
+
+/* Hallmark Accessible Focus Ring for Neo-Brutalism */
+:focus-visible {
+  outline: 3px solid #000000 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 2px var(--neo-yellow) !important;
+}

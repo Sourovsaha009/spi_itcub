@@ -8,8 +8,12 @@ interface CoursesSectionProps {
 }
 
 export const CoursesSection: React.FC<CoursesSectionProps> = ({ courses, onOpenJoin }) => {
-  // Neo-Brutalism color accents for category boxes
-  const badgeColors = ['bg-[#FFE600]', 'bg-[#10B981]', 'bg-[#60A5FA]', 'bg-[#FF5A5F]', 'bg-[#A78BFA]', 'bg-[#F472B6]', 'bg-[#FBBF24]'];
+  // Signature Neo-Brutalist brand accents for header icon chips
+  const headerChipAccents = [
+    { bg: 'bg-[#FFE600]', text: 'text-black' },
+    { bg: 'bg-[#10B981]', text: 'text-black' },
+    { bg: 'bg-[#003366]', text: 'text-white' }
+  ];
 
   return (
     <section id="courses" className="scroll-mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -29,7 +33,7 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ courses, onOpenJ
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {courses.map((course, idx) => {
-          const accentBg = badgeColors[idx % badgeColors.length];
+          const accent = headerChipAccents[idx % headerChipAccents.length];
           return (
             <div
               key={course.id}
@@ -41,8 +45,8 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ courses, onOpenJ
               </span>
 
               <div>
-                {/* Icon box in neo-brutalist style with dynamic micro-tilt */}
-                <div className={`w-14 h-14 ${accentBg} border-2 border-black rounded-xl flex items-center justify-center text-2xl mb-5 shadow-[3px_3px_0px_#000] text-black group-hover:-translate-y-1 group-hover:rotate-6 group-hover:shadow-[5px_5px_0px_#000] transition-all duration-200`}>
+                {/* Icon box in signature brand style with dynamic micro-tilt */}
+                <div className={`w-14 h-14 ${accent.bg} ${accent.text} border-2 border-black rounded-xl flex items-center justify-center text-2xl mb-5 shadow-[3px_3px_0px_#000] group-hover:-translate-y-1 group-hover:rotate-6 group-hover:shadow-[5px_5px_0px_#000] transition-all duration-200`}>
                   <i className={`${course.icon.includes('fa-brands') || course.icon.includes('fa-solid') ? course.icon : `fa-solid ${course.icon}`} text-2xl`}></i>
                 </div>
 

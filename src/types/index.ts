@@ -84,7 +84,6 @@ export interface ApplicationItem {
 }
 
 export interface ClubSettings {
-  passcode: string;
   clubName: string;
   instituteName: string;
   facebookUrl: string;

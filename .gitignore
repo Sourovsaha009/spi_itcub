@@ -6,3 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+.admin_auth.json
+data/.admin_auth.json

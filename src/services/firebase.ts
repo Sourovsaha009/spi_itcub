@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, onSnapshot } from 'firebase/firestore';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { ClubData, GalleryItem } from '../types';
 
 export const firebaseConfig = {
@@ -15,8 +16,25 @@ export const firebaseConfig = {
 // Initialize Firebase App safely
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-// Initialize Cloud Firestore
+// Initialize Cloud Firestore & Firebase Auth
 export const db = getFirestore(app);
+export const auth = getAuth(app);
+
+// Authenticate via Firebase Auth
+export async function loginWithFirebaseAuth(email: string, pass: string): Promise<User> {
+  const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+  return userCredential.user;
+}
+
+// Sign out from Firebase Auth
+export async function logoutFirebaseAuth(): Promise<void> {
+  await signOut(auth);
+}
+
+// Listen to Firebase Auth state
+export function onAdminAuthStateChanged(callback: (user: User | null) => void): () => void {
+  return onAuthStateChanged(auth, callback);
+}
 
 // Document path for SPI IT Club core data (notices, committee, founders, courses, settings)
 const CLUB_DOC_REF = doc(db, 'club_content', 'main_data');
