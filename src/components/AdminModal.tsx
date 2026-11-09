@@ -383,6 +383,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   // Designation hierarchy rank calculator for Executive Committee
   const getDesignationRank = (role: string = ''): number => {
     const r = role.toLowerCase().trim();
+    // Chief Advisor / Advisor
+    if (r.includes('chief advisor') || r.includes('প্রধান উপদেষ্টা')) return 2;
+    if (r.includes('advisor') || r.includes('উপদেষ্টা') || r.includes('mentor')) return 5;
+
     // President / সভাপতি
     if ((r.includes('president') && !r.includes('vice') && !r.includes('assistant') && !r.includes('joint')) ||
         (r.includes('সভাপতি') && !r.includes('সহ') && !r.includes('যুগ্ম'))) return 10;
@@ -427,9 +431,10 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   // Founder panel rank calculator
   const getFounderRank = (role: string = ''): number => {
     const r = role.toLowerCase().trim();
+    if (r.includes('chief advisor') || r.includes('প্রধান উপদেষ্টা')) return 5;
+    if (r.includes('advisor') || r.includes('উপদেষ্টা') || r.includes('mentor')) return 8;
     if (r === 'founder' || (r.includes('founder') && !r.includes('co'))) return 10;
     if (r.includes('co-founder') || r.includes('co founder') || r.includes('সহ-প্রতিষ্ঠাতা')) return 20;
-    if (r.includes('advisor') || r.includes('উপদেষ্টা') || r.includes('mentor')) return 30;
     if (r.includes('executive') || r.includes('কার্যনির্বাহী')) return 40;
     if (r.includes('member') || r.includes('সদস্য')) return 50;
     return 60;
